@@ -1,4 +1,5 @@
 ﻿using TwentyOne.Models;
+using Spectre.Console;
 
 namespace TwentyOne
 {
@@ -6,19 +7,29 @@ namespace TwentyOne
     {
         static void Main(string[] args)
         {
-            Deck deck = new();
-            deck.Shuffle();
-
-            Card? card;
-            for (int i = 0; i < 10; i++)
+            bool running = true;
+            while (running)
             {
-                card = deck.DealCard();
-                if (card != null)
+                AnsiConsole.Clear();
+                AnsiConsole.MarkupLine("[bold yellow]Welcome to Twenty-One![/]");
+                AnsiConsole.MarkupLine("1. Start New Game");
+                AnsiConsole.MarkupLine("2. Exit");
+
+                var choice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Select an option:")
+                        .AddChoices(new[] { "Start New Game", "Exit" }));
+
+                switch (choice)
                 {
-                    Console.WriteLine(card.ToString());
+                    case "Start New Game":
+                        running = false;
+                        break;
+                    case "Exit":
+                        running = false;
+                        break;
                 }
             }
-            
         }
     }
 }
