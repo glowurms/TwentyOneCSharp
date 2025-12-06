@@ -27,7 +27,7 @@ namespace TwentyOne.Models
         // Shuffle using Fisher-Yates algorithm
         // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
         // Modified to start at index 1 since index 0 does not need to be swapped
-        public void Shuffle()
+        public virtual void Shuffle()
         {
             UndealtCards.Clear();
 
