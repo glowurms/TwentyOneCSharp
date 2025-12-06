@@ -19,6 +19,30 @@ namespace TwentyOne.Models
             return Cards.Contains(card);
         }
 
+        public bool HasRank(Rank rank)
+        {
+            foreach(Card card in Cards)
+            {
+                if(card.Rank == rank)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool HasSuit(Suit suit)
+        {
+            foreach(Card card in Cards)
+            {
+                if(card.Suit == suit)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public bool RemoveCard(Card card)
         {
             return Cards.Remove(card);
