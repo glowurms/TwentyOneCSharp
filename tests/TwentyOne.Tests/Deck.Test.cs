@@ -1,71 +1,74 @@
 using TwentyOne.Models;
 using TwentyOne.Models.Enums;
 
-public class DeckTest
+namespace TwentyOne.Tests
 {
-    [Fact]
-    public void DeckInitialized()
+    public class DeckTest
     {
-        int rankCount = Enum.GetValues<Rank>().Length;
-        int suitCount = Enum.GetValues<Suit>().Length;
-        int totalCardCount = rankCount * suitCount;
+        [Fact]
+        public void DeckInitialized()
+        {
+            int rankCount = Enum.GetValues<Rank>().Length;
+            int suitCount = Enum.GetValues<Suit>().Length;
+            int totalCardCount = rankCount * suitCount;
 
-        Deck deck = new();
-    
-        Assert.Equal(totalCardCount, deck.TotalCardCount);
-        Assert.Equal(totalCardCount, deck.UndealtCardCount);
-    }
-
-    [Fact]
-    public void DeckDealCards()
-    {
-        int rankCount = Enum.GetValues<Rank>().Length;
-        int suitCount = Enum.GetValues<Suit>().Length;
-        int totalCardCount = rankCount * suitCount;
-
-        Deck deck = new();
-        Card? card;
+            Deck deck = new();
         
-        for (int i = 1; i <= totalCardCount; i++)
-        {
-            card = deck.DealCard();
-            Assert.NotNull(card);
-            Assert.Equal(deck.TotalCardCount - i, deck.UndealtCardCount);
+            Assert.Equal(totalCardCount, deck.TotalCardCount);
+            Assert.Equal(totalCardCount, deck.UndealtCardCount);
         }
 
-        card = deck.DealCard();
-        Assert.Null(card);
-    }
-
-    [Fact]
-    public void DeckShuffle()
-    {
-        List<string> unshuffledHand = [];
-        List<string> shuffledHand = [];
-
-        Deck deck = new();
-        Card? card;
-
-        for (int i = 0; i < 10; i++)
+        [Fact]
+        public void DeckDealCards()
         {
-            card = deck.DealCard();
-            if (card != null)
+            int rankCount = Enum.GetValues<Rank>().Length;
+            int suitCount = Enum.GetValues<Suit>().Length;
+            int totalCardCount = rankCount * suitCount;
+
+            Deck deck = new();
+            Card? card;
+            
+            for (int i = 1; i <= totalCardCount; i++)
             {
-                unshuffledHand.Add(card.ToString());
+                card = deck.DealCard();
+                Assert.NotNull(card);
+                Assert.Equal(deck.TotalCardCount - i, deck.UndealtCardCount);
             }
-        }
 
-        deck.Shuffle();
-
-        for (int i = 0; i < 10; i++)
-        {
             card = deck.DealCard();
-            if (card != null)
-            {
-                shuffledHand.Add(card.ToString());
-            }
+            Assert.Null(card);
         }
 
-        Assert.NotEqual(unshuffledHand, shuffledHand);
+        [Fact]
+        public void DeckShuffle()
+        {
+            List<string> unshuffledHand = [];
+            List<string> shuffledHand = [];
+
+            Deck deck = new();
+            Card? card;
+
+            for (int i = 0; i < 10; i++)
+            {
+                card = deck.DealCard();
+                if (card != null)
+                {
+                    unshuffledHand.Add(card.ToString());
+                }
+            }
+
+            deck.Shuffle();
+
+            for (int i = 0; i < 10; i++)
+            {
+                card = deck.DealCard();
+                if (card != null)
+                {
+                    shuffledHand.Add(card.ToString());
+                }
+            }
+
+            Assert.NotEqual(unshuffledHand, shuffledHand);
+        }
     }
 }
