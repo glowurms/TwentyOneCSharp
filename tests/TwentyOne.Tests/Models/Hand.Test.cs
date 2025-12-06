@@ -6,7 +6,7 @@ namespace TwentyOne.Tests.Models
     public class HandTest
     {
         [Fact]
-        public void AddCardIncreasesTotalCardCount()
+        public void AddCard_IncreasesTotalCardCount_Correctly()
         {
             Hand hand = new();
             Card card = new(Rank.Ten, Suit.Hearts);
@@ -18,7 +18,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void HasCard()
+        public void HasCard_WorksCorrectly()
         {
             Hand hand = new();
             Card card = new(Rank.Ten, Suit.Hearts);
@@ -31,7 +31,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void HasRank()
+        public void HasRank_WorksCorrectly()
         {
             Hand hand = new();
             hand.AddCard(new Card(Rank.Ten, Suit.Hearts));
@@ -42,7 +42,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void HasSuit()
+        public void HasSuit_WorksCorrectly()
         {
             Hand hand = new();
             hand.AddCard(new Card(Rank.Ten, Suit.Hearts));
@@ -53,7 +53,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void RemoveCard()
+        public void RemoveCard_WorksCorrectly()
         {
             Hand hand = new();
             Card card = new(Rank.Five, Suit.Spades);
@@ -72,7 +72,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void ClearHand()
+        public void ClearHand_WorksCorrectly()
         {
             Hand hand = new();
             hand.AddCard(new Card(Rank.Three, Suit.Diamonds));

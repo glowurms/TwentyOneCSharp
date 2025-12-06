@@ -6,7 +6,7 @@ namespace TwentyOne.Tests.Models
     public class ShoeTest
     {
         [Fact]
-        public void ShoeInitialized()
+        public void Shoe_Initialized_Correctly()
         {
             int rankCount = Enum.GetValues<Rank>().Length;
             int suitCount = Enum.GetValues<Suit>().Length;
@@ -43,7 +43,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void ShoeShuffleSetsCutCardPosition()
+        public void Shuffle_SetsCutCardPosition_Correctly()
         {
             Shoe shoe = new(4); // 4 decks
             int totalCardCount = shoe.TotalCardCount;
@@ -56,7 +56,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void CutCardReachedWorks()
+        public void CutCardReached_ValueUpdates_Correctly()
         {
             Shoe shoe = new(2); // 2 decks
             shoe.Shuffle();

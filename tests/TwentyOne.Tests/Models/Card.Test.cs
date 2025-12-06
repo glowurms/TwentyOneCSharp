@@ -6,7 +6,7 @@ namespace TwentyOne.Tests.Models
     public class CardTest
     {
         [Fact]
-        public void CardInitialized()
+        public void Card_Initialized_Correctly()
         {
             Card card = new(Rank.Ace, Suit.Hearts);
             Assert.Equal(Rank.Ace, card.Rank);
@@ -14,7 +14,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void CardToString()
+        public void Card_ToString_Correctly()
         {
             Card card = new(Rank.King, Suit.Spades);
             Assert.Equal("King of Spades", card.ToString());

@@ -6,7 +6,7 @@ namespace TwentyOne.Tests.Models
     public class DeckTest
     {
         [Fact]
-        public void DeckInitialized()
+        public void Deck_Initialized_Correctly()
         {
             int rankCount = Enum.GetValues<Rank>().Length;
             int suitCount = Enum.GetValues<Suit>().Length;
@@ -19,7 +19,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void DeckDealCards()
+        public void Deck_DealCards_Correctly()
         {
             int rankCount = Enum.GetValues<Rank>().Length;
             int suitCount = Enum.GetValues<Suit>().Length;
@@ -40,7 +40,7 @@ namespace TwentyOne.Tests.Models
         }
 
         [Fact]
-        public void DeckShuffle()
+        public void Deck_Shuffle_Correctly()
         {
             List<string> unshuffledHand = [];
             List<string> shuffledHand = [];
