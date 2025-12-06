@@ -1,7 +1,7 @@
 using TwentyOne.Models;
 using TwentyOne.Models.Enums;
 
-namespace TwentyOne.Tests
+namespace TwentyOne.Tests.Models
 {
     public class ShoeTest
     {
