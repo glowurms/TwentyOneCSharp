@@ -35,15 +35,15 @@ namespace TwentyOne.Tests.Services
             var actions = GameService.AvailablePlayerActions(hand);
             var actionsNoSplit = GameService.AvailablePlayerActions(handNoSplit);
 
-            Assert.Contains(PlayerActions.Hit, actions);
-            Assert.Contains(PlayerActions.Stand, actions);
-            Assert.Contains(PlayerActions.DoubleDown, actions);
-            Assert.Contains(PlayerActions.Split, actions);
+            Assert.Contains(PlayerHandActions.Hit, actions);
+            Assert.Contains(PlayerHandActions.Stand, actions);
+            Assert.Contains(PlayerHandActions.DoubleDown, actions);
+            Assert.Contains(PlayerHandActions.Split, actions);
 
-            Assert.Contains(PlayerActions.Hit, actionsNoSplit);
-            Assert.Contains(PlayerActions.Stand, actionsNoSplit);
-            Assert.Contains(PlayerActions.DoubleDown, actionsNoSplit);
-            Assert.DoesNotContain(PlayerActions.Split, actionsNoSplit);
+            Assert.Contains(PlayerHandActions.Hit, actionsNoSplit);
+            Assert.Contains(PlayerHandActions.Stand, actionsNoSplit);
+            Assert.Contains(PlayerHandActions.DoubleDown, actionsNoSplit);
+            Assert.DoesNotContain(PlayerHandActions.Split, actionsNoSplit);
         }
 
         [Theory]
