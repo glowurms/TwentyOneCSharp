@@ -6,87 +6,120 @@ namespace TwentyOne.Services
     public class GameDisplayService
     {
         private Text _headerText;
-        private Panel _dealerPanel;
-        private Panel _playerPanel;
-        private Panel _shoePanel;
-        private Panel _bankrollPanel;
-
-        private Columns _dealerSpace;
-        private Columns _playerSpace;
-        private Columns _actionsSpace;
-
         private GameState _gameState;
 
         public GameDisplayService(ref GameState gameState)
         {
             _gameState = gameState;
-
-            _headerText = new Text("Twenty-One Game", new Style(Color.Aqua)).Centered();
-
-            _dealerPanel = new(new Text("Dealer's Hand"));
-            _dealerPanel.Expand = true;
-
-            _playerPanel = new(new Text("Player's Hand"));
-            _playerPanel.Expand = true;
-
-            _shoePanel = new(new Text("Shoe Status"));
-            _bankrollPanel = new(new Text("Player's Bankroll"));
-
-            _dealerSpace = new(_dealerPanel, _shoePanel);
-            _playerSpace = new(_playerPanel, _bankrollPanel);
-            _actionsSpace = new();
+            _headerText = new Text("TwentyOne Game", new Style(Color.Aqua)).LeftJustified();
         }
 
         public void RenderGame()
         {
             AnsiConsole.Clear();
-            Grid twentyOneGameGrid = new();
-            twentyOneGameGrid.AddColumn();
-            twentyOneGameGrid.AddRow(_headerText);
-            twentyOneGameGrid.AddRow(_dealerSpace);
-            twentyOneGameGrid.AddRow(_actionsSpace);
-            twentyOneGameGrid.AddRow(_playerSpace);
-            twentyOneGameGrid.AddRow(StatusMessageText());
-            AnsiConsole.Write(twentyOneGameGrid);
-        }
+            Table dealerShoeInstructionsTable = new();
+            dealerShoeInstructionsTable.Border(TableBorder.Rounded);
+            dealerShoeInstructionsTable.AddColumn("Dealer");
+            dealerShoeInstructionsTable.AddColumn("Shoe");
+            dealerShoeInstructionsTable.AddColumn("Keys");
+            dealerShoeInstructionsTable.Columns[0].Width = 30;
+            dealerShoeInstructionsTable.Columns[1].Width = 20;
+            dealerShoeInstructionsTable.Columns[2].Width = 20;
+            // Total adds up to 80 with padding and borders
+            dealerShoeInstructionsTable.AddRow(
+                CreateHandPanel(_gameState.DealerHand),
+                CreateShoeInfo(),
+                KeymapInfo());
 
-        public void RenderInstructions()
-        {
-            AnsiConsole.Clear();
-            Grid twentyOneGameGrid = new();
-            twentyOneGameGrid.AddColumn();
-            twentyOneGameGrid.AddRow(_headerText);
-            twentyOneGameGrid.AddRow(CreateInstructions());
-            twentyOneGameGrid.AddRow(StatusMessageText());
-            AnsiConsole.Write(twentyOneGameGrid);
+            Table playerBankrollTable = new();
+            playerBankrollTable.Border(TableBorder.Rounded);
+            playerBankrollTable.AddColumn("PlayerHand");
+            playerBankrollTable.AddColumn("Bankroll");
+            playerBankrollTable.Columns[0].Width = 53;
+            playerBankrollTable.Columns[1].Width = 20;
+            // Total adds up to 80 with padding and borders
+            playerBankrollTable.AddRow(
+                CreatePlayerHands(),
+                new Text($"${_gameState.Players[0].Bankroll}"));
+
+            Rows rowsToDisplay = new(
+                _headerText,
+                dealerShoeInstructionsTable,
+                new Text("Available actions will go here...", new Style(Color.Green)).LeftJustified(),
+                playerBankrollTable,
+                StatusMessageText());
+
+            AnsiConsole.Write(rowsToDisplay);
         }
 
         private Text StatusMessageText()
         {
-            return new Text(_gameState.StatusMessage, new Style(Color.Yellow)).Centered();
+            return new Text(_gameState.StatusMessage, new Style(Color.Yellow)).LeftJustified();
         }
 
-        private Table CreateInstructions()
+        private static Rows KeymapInfo()
         {
-            Table instructionsTable = new();
-            instructionsTable.HideHeaders();
-            instructionsTable.Border(TableBorder.Rounded);
-            instructionsTable.AddColumn("Action");
-            instructionsTable.Columns[0].Padding = new Padding(1, 1, 1, 1);
+            List<Markup> instructionMarkups = [];
 
             foreach (var action in GameService.ActionKeys)
             {
-                instructionsTable.AddRow(new Markup($"[bold]{action.Value}[/] - {action.Key}"));
+                instructionMarkups.Add(new Markup($"[bold][[{action.Value}]][/] - {action.Key}"));
             }
 
-            instructionsTable.AddRow(new Text("----").Centered());
+            instructionMarkups.Add(new Markup("----").Centered());
 
             foreach (var action in GameService.GameActionKeys)
             {
-                instructionsTable.AddRow(new Markup($"[bold]{action.Value}[/] - {action.Key}"));
+                instructionMarkups.Add(new Markup($"[bold][[{action.Value}]][/] - {action.Key}"));
             }
 
-            return instructionsTable;
+            return new Rows(instructionMarkups);
+        }
+
+        private static Panel CreateHandPanel(Hand hand)
+        {
+            List<string> cardStrings = [];
+            foreach (Card card in hand.CardsInHand)
+            {
+                cardStrings.Add(card.ToString());
+            }
+
+            Panel handPanel = new(string.Join("\n", cardStrings));
+            handPanel.Expand = true;
+            handPanel.Border = BoxBorder.Rounded;
+            handPanel.BorderColor(Color.Silver);
+            handPanel.Padding = new Padding(2, 2, 2, 2);
+            handPanel.Header = new PanelHeader($" Hand [[{GameService.HandValue(hand)}]] ");
+            return handPanel;
+        }
+
+        private Columns CreatePlayerHands()
+        {
+            List<Panel> handPanels = [];
+            foreach (var hand in _gameState.Players[0].HandsInPlay)
+            {
+                handPanels.Add(CreateHandPanel(hand));
+            }
+
+            Columns playerHands = new(handPanels);
+            return playerHands;
+        }
+
+        private Rows CreateShoeInfo()
+        {
+            Panel undealtCardsPanel = new($"{_gameState.Shoe.UndealtCardCount}");
+            undealtCardsPanel.Border = BoxBorder.Rounded;
+            undealtCardsPanel.Header = new PanelHeader("Undealt Cards");
+            undealtCardsPanel.Expand = true;
+            undealtCardsPanel.Padding = new Padding(2, 2, 2, 2);
+
+            Panel decksPanel = new($"{_gameState.Shoe.DeckCount}");
+            decksPanel.Border = BoxBorder.Rounded;
+            decksPanel.Header = new PanelHeader("Decks in Shoe");
+            decksPanel.Expand = true;
+            decksPanel.Padding = new Padding(2, 2, 2, 2);
+
+            return new Rows(undealtCardsPanel, decksPanel);
         }
     }
 }
