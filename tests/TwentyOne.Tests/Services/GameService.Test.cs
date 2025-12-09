@@ -9,16 +9,20 @@ namespace TwentyOne.Tests.Services
         [Fact]
         public void DealInitialCards_WorksCorrectly()
         {
-            // Arrange
-            Shoe shoe = new(4); // 4 decks
-            Hand dealerHand = new();
-            Hand playerHand = new();
+            GameState gameState = new()
+            {
+                Shoe = new Shoe(4),
+                DealerHand = new Hand(),
+                Players = [new Player("Player1", 100m)]
+            };
 
-            GameService.DealInitialCards(ref shoe, ref dealerHand, ref playerHand);
+            GameService gameService = new(ref gameState);
 
-            Assert.Equal(2, dealerHand.TotalCardCount);
-            Assert.Equal(2, playerHand.TotalCardCount);
-            Assert.Equal(shoe.TotalCardCount - 4, shoe.UndealtCardCount);
+            gameService.DealInitialCards();
+
+            Assert.Equal(2, gameState.DealerHand.TotalCardCount);
+            Assert.Equal(2, gameState.Players[0].HandsInPlay[0].TotalCardCount);
+            Assert.Equal(gameState.Shoe.TotalCardCount - 4, gameState.Shoe.UndealtCardCount);
         }
 
         [Fact]
@@ -143,7 +147,18 @@ namespace TwentyOne.Tests.Services
                 dealerHand.AddCard(new Card(rank, Suit.Hearts));
             }
 
-            bool shouldDraw = GameService.DealerShouldDraw(dealerHand);
+            GameState gameState = new()
+            {
+                Shoe = new Shoe(3),
+                DealerHand = new Hand(),
+                Players = [new Player("Player1", 100m)]
+            };
+
+            gameState.DealerHand = dealerHand;
+
+            GameService gameService = new(ref gameState);
+
+            bool shouldDraw = gameService.DealerShouldDraw();
 
             Assert.Equal(expectedShouldDraw, shouldDraw);
         }

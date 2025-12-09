@@ -44,17 +44,29 @@ namespace TwentyOne.Services
             { PlayerGameActions.Quit, ConsoleKey.Q }
         };
 
-        public static void DealInitialCards(ref Shoe shoe, ref Hand dealerHand, ref Hand playerHand)
+        private GameState _gameState;
+
+        public GameService(ref GameState gameState)
         {
-            if (shoe.CutCardReached || shoe.CutCardPosition == 0)
+            _gameState = gameState;
+        }
+
+        public void DealInitialCards()
+        {
+            if (_gameState.Shoe.CutCardReached || _gameState.Shoe.CutCardPosition == 0)
             {
-                shoe.Shuffle();
+                _gameState.Shoe.Shuffle();
             }
 
-            playerHand.AddCard(DealCardFromShoe(ref shoe));
-            dealerHand.AddCard(DealCardFromShoe(ref shoe));
-            playerHand.AddCard(DealCardFromShoe(ref shoe));
-            dealerHand.AddCard(DealCardFromShoe(ref shoe));
+            _gameState.DealerHand = new Hand();
+
+            _gameState.Players[0].HandsInPlay.Clear();
+            _gameState.Players[0].HandsInPlay.Add(new Hand());
+
+            _gameState.Players[0].HandsInPlay[0].AddCard(DealCardFromShoe());
+            _gameState.DealerHand.AddCard(DealCardFromShoe());
+            _gameState.Players[0].HandsInPlay[0].AddCard(DealCardFromShoe());
+            _gameState.DealerHand.AddCard(DealCardFromShoe());
         }
 
         public static List<PlayerHandActions> AvailablePlayerActions(Hand hand)
@@ -114,9 +126,9 @@ namespace TwentyOne.Services
             return false;
         }
 
-        public static bool DealerShouldDraw(Hand dealerHand)
+        public bool DealerShouldDraw()
         {
-            return HandValue(dealerHand) < 17;
+            return HandValue(_gameState.DealerHand) < 17;
         }
 
         private static bool CanSplitHand(Hand hand)
@@ -128,9 +140,9 @@ namespace TwentyOne.Services
             return false;
         }
 
-        private static Card DealCardFromShoe(ref Shoe shoe)
+        private Card DealCardFromShoe()
         {
-            Card? card = shoe.DealCard();
+            Card? card = _gameState.Shoe.DealCard();
             return card ?? throw new Exception("Not enough cards in the shoe.");
         }
     }
