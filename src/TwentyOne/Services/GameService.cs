@@ -22,6 +22,28 @@ namespace TwentyOne.Services
             { Rank.King, 10 }
         };
 
+        public static readonly Dictionary<PlayerHandActions, string> ActionDescriptions = new()
+        {
+            { PlayerHandActions.Hit, "Take another card" },
+            { PlayerHandActions.Stand, "Keep your current hand" },
+            { PlayerHandActions.DoubleDown, "Double your bet and take one more card" },
+            { PlayerHandActions.Split, "Split your hand into two hands" }
+        };
+
+        public static readonly Dictionary<PlayerHandActions, ConsoleKey> ActionKeys = new()
+        {
+            { PlayerHandActions.Hit, ConsoleKey.Spacebar },
+            { PlayerHandActions.Stand, ConsoleKey.S },
+            { PlayerHandActions.DoubleDown, ConsoleKey.D },
+            { PlayerHandActions.Split, ConsoleKey.F }
+        };
+
+        public static readonly Dictionary<PlayerGameActions, ConsoleKey> GameActionKeys = new()
+        {
+            { PlayerGameActions.Instructions, ConsoleKey.I },
+            { PlayerGameActions.Quit, ConsoleKey.Q }
+        };
+
         public static void DealInitialCards(ref Shoe shoe, ref Hand dealerHand, ref Hand playerHand)
         {
             if (shoe.CutCardReached || shoe.CutCardPosition == 0)
@@ -35,21 +57,21 @@ namespace TwentyOne.Services
             dealerHand.AddCard(DealCardFromShoe(ref shoe));
         }
 
-        public static List<PlayerActions> AvailablePlayerActions(Hand hand)
+        public static List<PlayerHandActions> AvailablePlayerActions(Hand hand)
         {
-            var actions = new List<PlayerActions> { PlayerActions.Stand };
+            var actions = new List<PlayerHandActions> { PlayerHandActions.Stand };
 
             if (hand.TotalCardCount == 2)
             {
-                actions.Add(PlayerActions.DoubleDown);
+                actions.Add(PlayerHandActions.DoubleDown);
 
                 if (CanSplitHand(hand))
                 {
-                    actions.Add(PlayerActions.Split);
+                    actions.Add(PlayerHandActions.Split);
                 }
             }
 
-            actions.Add(PlayerActions.Hit);
+            actions.Add(PlayerHandActions.Hit);
 
             return actions;
         }
