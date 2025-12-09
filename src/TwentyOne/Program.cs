@@ -1,5 +1,7 @@
 ﻿using TwentyOne.Models;
+using TwentyOne.Models.Enums;
 using Spectre.Console;
+using TwentyOne.Services;
 
 namespace TwentyOne
 {
@@ -8,26 +10,26 @@ namespace TwentyOne
         static void Main(string[] args)
         {
             bool running = true;
+
+            GameState gameState = new()
+            {
+                Shoe = new Shoe(3),
+                DealerHand = new Hand(),
+                Players = [new Player("Player1", 100m)]
+            };
+
+            GameService GameService = new(ref gameState);
+            GameDisplayService gameDisplay = new(ref gameState);
+
+            GameService.DealInitialCards();
+
             while (running)
             {
-                AnsiConsole.Clear();
-                AnsiConsole.MarkupLine("[bold yellow]Welcome to Twenty-One![/]");
-                AnsiConsole.MarkupLine("1. Start New Game");
-                AnsiConsole.MarkupLine("2. Exit");
-
-                var choice = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("Select an option:")
-                        .AddChoices(new[] { "Start New Game", "Exit" }));
-
-                switch (choice)
+                gameDisplay.RenderGame();
+                ConsoleKeyInfo playerInput = Console.ReadKey();
+                if (GameService.GameActionKeys[PlayerGameActions.Quit] == playerInput.Key)
                 {
-                    case "Start New Game":
-                        running = false;
-                        break;
-                    case "Exit":
-                        running = false;
-                        break;
+                    running = false;
                 }
             }
         }
