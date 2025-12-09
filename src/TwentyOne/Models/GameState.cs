@@ -8,6 +8,6 @@ namespace TwentyOne.Models
         public Hand DealerHand { get; set; } = new();
         public List<Player> Players { get; set; } = [];
         public List<PlayerHandActions> AvailableActions { get; set; } = [];
-        public string StatusMessage { get; set; } = "";
+        public string StatusMessage { get; set; } = "Status Message Here";
     }
 }
