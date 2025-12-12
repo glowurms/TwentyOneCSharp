@@ -1,5 +1,3 @@
-using TwentyOne.Models.Enums;
-
 namespace TwentyOne.Models
 {
     public class Shoe : Deck
@@ -7,6 +5,7 @@ namespace TwentyOne.Models
         public readonly int DeckCount = 1;
         public int CutCardPosition { get { return _cutCardPosition; } }
         public bool CutCardReached { get { return UndealtCardCount <= CutCardPosition; } }
+        public bool ShoeIsNotShuffled { get { return _cutCardPosition == 0; } }
 
         private int _cutCardPosition = 0;
 
