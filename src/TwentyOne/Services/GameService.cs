@@ -58,37 +58,33 @@ namespace TwentyOne.Services
 
         public static readonly Dictionary<PlayerHandActions, string> ActionDescriptions = new()
         {
+            { PlayerHandActions.Bet, "Place a bet" },
             { PlayerHandActions.Hit, "Take another card" },
             { PlayerHandActions.Stand, "Keep your current hand" },
             { PlayerHandActions.DoubleDown, "Double your bet and take one more card" },
             { PlayerHandActions.Split, "Split your hand into two hands" }
         };
 
+        // TODO: Move this to a UI service
+        // Key bindings for player actions
         public static readonly Dictionary<PlayerHandActions, ConsoleKey> ActionKeys = new()
         {
+            { PlayerHandActions.Bet, ConsoleKey.B },
             { PlayerHandActions.Hit, ConsoleKey.Spacebar },
             { PlayerHandActions.Stand, ConsoleKey.S },
             { PlayerHandActions.DoubleDown, ConsoleKey.D },
             { PlayerHandActions.Split, ConsoleKey.F }
         };
 
+        // TODO: Move this to a UI service
+        // Key bindings for game actions
         public static readonly Dictionary<PlayerGameActions, ConsoleKey> GameActionKeys = new()
         {
             { PlayerGameActions.Instructions, ConsoleKey.I },
             { PlayerGameActions.Quit, ConsoleKey.Q }
         };
 
-        public enum GamePhase
-        {
-            Betting,
-            Dealing,
-            PlayerTurns,
-            DealerTurn,
-            RoundEnd
-        }
-
         private GameState _gameState;
-        private GamePhase _currentGamePhase;
 
         public GameService()
         {
@@ -106,15 +102,14 @@ namespace TwentyOne.Services
             {
                 Shoe = new Shoe(shoeDeckCount),
                 DealerHand = new Hand(),
-                Players = []
+                Players = [],
+                CurrentGamePhase = GamePhase.Betting
             };
 
             for (int i = 1; i <= playerCount; i++)
             {
                 _gameState.Players.Add(new Player($"Player {i}", startingBankroll));
             }
-
-            DealInitialCards(); 
 
             _gameState.StatusMessage = "New game started.";
             return _gameState;

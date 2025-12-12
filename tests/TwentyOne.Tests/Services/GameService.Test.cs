@@ -6,45 +6,45 @@ namespace TwentyOne.Tests.Services
     public class GameServiceTest
     {
         [Fact]
-        public void DealInitialCards_WorksCorrectly()
-        {
-            GameState gameState = new()
-            {
-                Shoe = new Shoe(4),
-                DealerHand = new Hand(),
-                Players = [new Player("Player1", 100m)]
-            };
-
-            GameService gameService = new(ref gameState);
-
-            gameService.DealInitialCards();
-
-            Assert.Equal(2, gameState.DealerHand.TotalCardCount);
-            Assert.Equal(2, gameState.Players[0].HandsInPlay[0].TotalCardCount);
-            Assert.Equal(gameState.Shoe.TotalCardCount - 4, gameState.Shoe.UndealtCardCount);
-        }
-
-        [Fact]
         public void StartNewGame_InitializesGameStateCorrectly()
         {
-            GameService gameService = new();
-            GameState gameStateOnePlayer = gameService.StartNewGame(500, 6, 1);
-            GameState gameStateTwoPlayers = gameService.StartNewGame(500, 6, 2);
+            GameService gameServiceOnePlayer = new();
+            GameState gameStateOnePlayer = gameServiceOnePlayer.StartNewGame(500, 6, 1);
+
+            GameService gameServiceTwoPlayers = new();
+            GameState gameStateTwoPlayers = gameServiceTwoPlayers.StartNewGame(500, 6, 2);
 
             Assert.Single(gameStateOnePlayer.Players);
             Assert.Equal(500, gameStateOnePlayer.Players[0].Bankroll);
-            Assert.Equal(2, gameStateOnePlayer.DealerHand.TotalCardCount);
-            Assert.Equal(2, gameStateOnePlayer.Players[0].HandsInPlay[0].TotalCardCount);
-            // 2 cards each to dealer and 1 player = 4 cards dealt
-            Assert.Equal(gameStateOnePlayer.Shoe.TotalCardCount - 4, gameStateOnePlayer.Shoe.UndealtCardCount);
+            Assert.Equal(GamePhase.Betting, gameStateOnePlayer.CurrentGamePhase);
 
             Assert.Equal(2, gameStateTwoPlayers.Players.Count);
             Assert.Equal(500, gameStateTwoPlayers.Players[0].Bankroll);
             Assert.Equal(500, gameStateTwoPlayers.Players[1].Bankroll);
+            Assert.Equal(GamePhase.Betting, gameStateTwoPlayers.CurrentGamePhase);
+        }
+
+        [Fact]
+        public void DealInitialCards_WorksCorrectly()
+        {
+            GameService gameServiceOnePlayer = new();
+            GameState gameStateOnePlayer = gameServiceOnePlayer.StartNewGame(500, 6, 1);
+
+            GameService gameServiceTwoPlayers = new();
+            GameState gameStateTwoPlayers = gameServiceTwoPlayers.StartNewGame(500, 6, 2);
+
+            gameServiceOnePlayer.DealInitialCards();
+            gameServiceTwoPlayers.DealInitialCards();
+
+            Assert.Equal(2, gameStateOnePlayer.DealerHand.TotalCardCount);
+            Assert.Equal(2, gameStateOnePlayer.Players[0].HandsInPlay[0].TotalCardCount);
+            // Each player and the dealer has 2 cards, so total 4 cards dealt
+            Assert.Equal(gameStateOnePlayer.Shoe.TotalCardCount - 4, gameStateOnePlayer.Shoe.UndealtCardCount);
+
             Assert.Equal(2, gameStateTwoPlayers.DealerHand.TotalCardCount);
             Assert.Equal(2, gameStateTwoPlayers.Players[0].HandsInPlay[0].TotalCardCount);
             Assert.Equal(2, gameStateTwoPlayers.Players[1].HandsInPlay[0].TotalCardCount);
-            // 2 cards each to dealer and 2 players = 6 cards dealt
+            // Each player and the dealer has 2 cards, so total 6 cards dealt
             Assert.Equal(gameStateTwoPlayers.Shoe.TotalCardCount - 6, gameStateTwoPlayers.Shoe.UndealtCardCount);
         }
 
