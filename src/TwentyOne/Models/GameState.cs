@@ -1,5 +1,3 @@
-using TwentyOne.Models.Enums;
-
 namespace TwentyOne.Models
 {
     public class GameState ()
@@ -9,5 +7,7 @@ namespace TwentyOne.Models
         public List<Player> Players { get; set; } = [];
         public List<PlayerHandActions> AvailableActions { get; set; } = [];
         public string StatusMessage { get; set; } = "Status Message Here";
+        public int CurrentPlayerIndex { get; set; } = 0;
+        public int CurrentHandIndex { get; set; } = 0;
     }
 }
