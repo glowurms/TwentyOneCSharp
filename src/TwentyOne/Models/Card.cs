@@ -1,11 +1,10 @@
-using TwentyOne.Models.Enums;
-
 namespace TwentyOne.Models
 {
     public class Card(Rank CardRank, Suit CardSuit)
     {
         public Rank Rank { get; } = CardRank;
         public Suit Suit { get; } = CardSuit;
+        public bool FaceUp { get; set; } = true;
 
         public override string ToString()
         {
