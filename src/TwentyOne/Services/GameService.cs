@@ -1,8 +1,42 @@
 using TwentyOne.Models;
-using TwentyOne.Models.Enums;
 
 namespace TwentyOne.Services
 {
+    /*
+    Game rules reference:
+    https://bicyclecards.com/how-to-play/blackjack
+
+    Game flow:
+    - Bets placed
+    - 1 card face up to each player, 1 card face up to dealer
+    - 1 card face up to each player, 1 card face down to dealer
+
+    - Evaluate player Naturals (Ace and 10-value card)
+        - Player has Natural, dealer does not -> player wins - 1.5x bet
+        - Dealer has Natural, player does not -> dealer wins
+        - Both have Naturals -> push - player bet returned
+
+    - Cycle through each player
+        - Evaluate Available actions for player's hand
+            - If Hit, deal card, re-evaluate available actions
+            - If Stand, move to next player
+            - If Double Down, double bet, deal one card, move to next player
+            - If Split,
+                - Create new hand
+                - move one card to new hand
+                - deal one card to each hand
+                - re-evaluate available actions for first hand
+
+    - Dealer's turn
+        - Reveal face down card
+        - Dealer plays to 17
+        - If dealer busts, round ends and all remaining players win
+        - if dealer stands, evaluate each player's hand against dealer's hand
+            - Player hand value > dealer hand value -> player wins 1x bet
+            - Player hand value < dealer hand value -> dealer wins
+            - Player hand value == dealer hand value -> push - player bet returned
+
+    */
     public class GameService
     {
         public static readonly Dictionary<Rank, int> RankValues = new()
@@ -44,29 +78,72 @@ namespace TwentyOne.Services
             { PlayerGameActions.Quit, ConsoleKey.Q }
         };
 
+        public enum GamePhase
+        {
+            Betting,
+            Dealing,
+            PlayerTurns,
+            DealerTurn,
+            RoundEnd
+        }
+
         private GameState _gameState;
+        private GamePhase _currentGamePhase;
+
+        public GameService()
+        {
+            _gameState = new();
+        }
 
         public GameService(ref GameState gameState)
         {
             _gameState = gameState;
         }
 
+        public GameState StartNewGame(int startingBankroll, int shoeDeckCount, int playerCount = 1)
+        {
+            _gameState = new()
+            {
+                Shoe = new Shoe(shoeDeckCount),
+                DealerHand = new Hand(),
+                Players = []
+            };
+
+            for (int i = 1; i <= playerCount; i++)
+            {
+                _gameState.Players.Add(new Player($"Player {i}", startingBankroll));
+            }
+
+            DealInitialCards(); 
+
+            _gameState.StatusMessage = "New game started.";
+            return _gameState;
+        }
+
         public void DealInitialCards()
         {
-            if (_gameState.Shoe.CutCardReached || _gameState.Shoe.CutCardPosition == 0)
+            if (_gameState.Shoe.CutCardReached || _gameState.Shoe.ShoeIsNotShuffled)
             {
                 _gameState.Shoe.Shuffle();
             }
 
+            // Setup hands and deal first card
+            foreach (Player player in _gameState.Players)
+            {
+                player.HandsInPlay.Clear();
+                player.HandsInPlay.Add(new Hand());
+                player.HandsInPlay[0].AddCard(DealCardFromShoe());
+            }
             _gameState.DealerHand = new Hand();
-
-            _gameState.Players[0].HandsInPlay.Clear();
-            _gameState.Players[0].HandsInPlay.Add(new Hand());
-
-            _gameState.Players[0].HandsInPlay[0].AddCard(DealCardFromShoe());
             _gameState.DealerHand.AddCard(DealCardFromShoe());
-            _gameState.Players[0].HandsInPlay[0].AddCard(DealCardFromShoe());
+
+            // Deal second card
+            foreach (Player player in _gameState.Players)
+            {
+                player.HandsInPlay[0].AddCard(DealCardFromShoe());
+            }
             _gameState.DealerHand.AddCard(DealCardFromShoe());
+            _gameState.StatusMessage = "Cards Dealt.";
         }
 
         public static List<PlayerHandActions> AvailablePlayerActions(Hand hand)
@@ -86,6 +163,62 @@ namespace TwentyOne.Services
             actions.Add(PlayerHandActions.Hit);
 
             return actions;
+        }
+
+        // public void HandlePlayerAction(PlayerHandActions action)
+        // {
+        //     switch (action)
+        //     {
+        //         case PlayerHandActions.Hit:
+        //             PlayerHit();
+        //             break;
+        //         case PlayerHandActions.Stand:
+        //             HandleStandAction();
+        //             break;
+        //         case PlayerHandActions.DoubleDown:
+        //             HandleDoubleDownAction();
+        //             break;
+        //         case PlayerHandActions.Split:
+        //             HandleSplitAction();
+        //             break;
+        //     }
+
+        //     if (action == PlayerHandActions.Hit)
+        //     {
+        //     }
+        // }
+
+        private void AdvanceHandOrPlayer()
+        {
+            int playerIndex = _gameState.CurrentPlayerIndex;
+            int handIndex = _gameState.CurrentHandIndex;
+
+            if (handIndex + 1 < _gameState.Players[playerIndex].HandsInPlay.Count)
+            {
+                // Move to next hand for current player
+                _gameState.CurrentHandIndex++;
+            }
+            else if (playerIndex + 1 < _gameState.Players.Count)
+            {
+                // Move to next player
+                _gameState.CurrentPlayerIndex++;
+                _gameState.CurrentHandIndex = 0;
+            }
+            else
+            {
+                // Move to next player
+                _gameState.CurrentPlayerIndex = 0;
+                _gameState.CurrentHandIndex = 0;
+            }
+        }
+
+        public void PlayerHit()
+        {
+            Card dealtCard = DealCardFromShoe();
+            int playerIndex = _gameState.CurrentPlayerIndex;
+            int handIndex = _gameState.CurrentHandIndex;
+            _gameState.Players[playerIndex].HandsInPlay[handIndex].AddCard(dealtCard);
+            _gameState.StatusMessage = "Player hits.";
         }
 
         public static int HandValue(Hand hand)
@@ -120,6 +253,15 @@ namespace TwentyOne.Services
         public static bool HandIsTwentyOne(Hand hand)
         {
             if (HandValue(hand) == 21)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool HandIsNatural(Hand hand)
+        {
+            if (hand.TotalCardCount == 2 && HandValue(hand) == 21)
             {
                 return true;
             }

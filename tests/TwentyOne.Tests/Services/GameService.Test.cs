@@ -1,5 +1,4 @@
 using TwentyOne.Models;
-using TwentyOne.Models.Enums;
 using TwentyOne.Services;
 
 namespace TwentyOne.Tests.Services
@@ -23,6 +22,30 @@ namespace TwentyOne.Tests.Services
             Assert.Equal(2, gameState.DealerHand.TotalCardCount);
             Assert.Equal(2, gameState.Players[0].HandsInPlay[0].TotalCardCount);
             Assert.Equal(gameState.Shoe.TotalCardCount - 4, gameState.Shoe.UndealtCardCount);
+        }
+
+        [Fact]
+        public void StartNewGame_InitializesGameStateCorrectly()
+        {
+            GameService gameService = new();
+            GameState gameStateOnePlayer = gameService.StartNewGame(500, 6, 1);
+            GameState gameStateTwoPlayers = gameService.StartNewGame(500, 6, 2);
+
+            Assert.Single(gameStateOnePlayer.Players);
+            Assert.Equal(500, gameStateOnePlayer.Players[0].Bankroll);
+            Assert.Equal(2, gameStateOnePlayer.DealerHand.TotalCardCount);
+            Assert.Equal(2, gameStateOnePlayer.Players[0].HandsInPlay[0].TotalCardCount);
+            // 2 cards each to dealer and 1 player = 4 cards dealt
+            Assert.Equal(gameStateOnePlayer.Shoe.TotalCardCount - 4, gameStateOnePlayer.Shoe.UndealtCardCount);
+
+            Assert.Equal(2, gameStateTwoPlayers.Players.Count);
+            Assert.Equal(500, gameStateTwoPlayers.Players[0].Bankroll);
+            Assert.Equal(500, gameStateTwoPlayers.Players[1].Bankroll);
+            Assert.Equal(2, gameStateTwoPlayers.DealerHand.TotalCardCount);
+            Assert.Equal(2, gameStateTwoPlayers.Players[0].HandsInPlay[0].TotalCardCount);
+            Assert.Equal(2, gameStateTwoPlayers.Players[1].HandsInPlay[0].TotalCardCount);
+            // 2 cards each to dealer and 2 players = 6 cards dealt
+            Assert.Equal(gameStateTwoPlayers.Shoe.TotalCardCount - 6, gameStateTwoPlayers.Shoe.UndealtCardCount);
         }
 
         [Fact]
@@ -133,6 +156,23 @@ namespace TwentyOne.Tests.Services
             bool isTwentyOne = GameService.HandIsTwentyOne(hand);
 
             Assert.Equal(expectedIsTwentyOne, isTwentyOne);
+        }
+
+        [Theory]
+        [InlineData(new Rank[] { Rank.Ace, Rank.King }, true)]  // Natural 21
+        [InlineData(new Rank[] { Rank.Ten, Rank.King }, false)] // Not 21
+        [InlineData(new Rank[] { Rank.Ace, Rank.Nine, Rank.Ace }, false)] // 21 but not natural
+        public void HandIsNatural_WorksCorrectly(Rank[] ranks, bool expectedIsNatural)
+        {
+            Hand hand = new();
+            foreach (var rank in ranks)
+            {
+                hand.AddCard(new Card(rank, Suit.Hearts));
+            }
+
+            bool isNatural = GameService.HandIsNatural(hand);
+
+            Assert.Equal(expectedIsNatural, isNatural);
         }
 
         [Theory]
