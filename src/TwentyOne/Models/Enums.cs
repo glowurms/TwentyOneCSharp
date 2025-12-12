@@ -21,7 +21,12 @@ namespace TwentyOne.Models
 
     public enum PlayerHandActions
     {
-       Stand, Hit, DoubleDown, Split
+       Bet, Stand, Hit, DoubleDown, Split
+    }
+
+    public enum PlayerStatus
+    {
+        Active, Busted, Standing, Blackjack, Bankrupt
     }
 
     public enum PlayerGameActions
