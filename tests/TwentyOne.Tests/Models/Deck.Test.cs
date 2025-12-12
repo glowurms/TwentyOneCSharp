@@ -1,5 +1,4 @@
 using TwentyOne.Models;
-using TwentyOne.Models.Enums;
 
 namespace TwentyOne.Tests.Models
 {

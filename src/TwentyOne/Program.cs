@@ -1,6 +1,4 @@
 ﻿using TwentyOne.Models;
-using TwentyOne.Models.Enums;
-using Spectre.Console;
 using TwentyOne.Services;
 
 namespace TwentyOne

@@ -1,5 +1,3 @@
-using TwentyOne.Models.Enums;
-
 namespace TwentyOne.Models
 {
     public class Deck
