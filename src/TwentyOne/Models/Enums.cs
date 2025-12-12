@@ -10,6 +10,15 @@ namespace TwentyOne.Models
         Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King
     }
 
+    public enum GamePhase
+    {
+        Betting,
+        Dealing,
+        PlayerTurns,
+        DealerTurn,
+        RoundEnd
+    }
+
     public enum PlayerHandActions
     {
        Stand, Hit, DoubleDown, Split
