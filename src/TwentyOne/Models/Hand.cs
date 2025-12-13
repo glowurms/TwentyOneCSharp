@@ -50,5 +50,11 @@ namespace TwentyOne.Models
         {
             Cards.Clear();
         }
+
+        public string HandInfo()
+        {
+            List<string> cardStrings = [.. Cards.Select(c => c.ToString())];
+            return $"Hand[{TotalCardCount}]: [{string.Join(", ", cardStrings)}]";
+        }
     }
 }
