@@ -109,6 +109,8 @@ namespace TwentyOne.Services
             { PlayerGameActions.Quit, ConsoleKey.Q }
         };
 
+        public GameState GameState { get { return _gameState; } }
+
         private GameState _gameState;
 
         public GameService()
