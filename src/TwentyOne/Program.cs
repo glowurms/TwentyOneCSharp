@@ -9,17 +9,11 @@ namespace TwentyOne
         {
             bool running = true;
 
-            GameState gameState = new()
-            {
-                Shoe = new Shoe(3),
-                DealerHand = new Hand(),
-                Players = [new Player("Player1", 100m)]
-            };
-
-            GameService GameService = new(ref gameState);
+            GameService gameService = new();
+            GameState gameState = gameService.StartNewGame(500, 6, 3);
             GameDisplayService gameDisplay = new(ref gameState);
 
-            GameService.DealInitialCards();
+            gameService.DealInitialCards();
 
             while (running)
             {
@@ -28,6 +22,7 @@ namespace TwentyOne
                 if (GameService.GameActionKeys[PlayerGameActions.Quit] == playerInput.Key)
                 {
                     running = false;
+                    // GameDisplayService.ClearGame();
                 }
             }
         }
