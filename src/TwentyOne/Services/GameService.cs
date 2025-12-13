@@ -56,6 +56,14 @@ namespace TwentyOne.Services
             { Rank.King, 10 }
         };
 
+        public static Dictionary<Suit, string> SuitStrings = new()
+        {
+            { Suit.Clubs, "♣" },
+            { Suit.Diamonds, "♦" },
+            { Suit.Hearts, "♥" },
+            { Suit.Spades, "♠" }
+        };
+
         public static readonly Dictionary<PlayerHandActions, string> ActionDescriptions = new()
         {
             { PlayerHandActions.Bet, "Place a bet" },
