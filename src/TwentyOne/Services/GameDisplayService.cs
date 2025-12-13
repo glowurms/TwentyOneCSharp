@@ -14,11 +14,16 @@ namespace TwentyOne.Services
             _headerText = new Text("TwentyOne Game", new Style(Color.Aqua)).LeftJustified();
         }
 
+        public static void ClearGame()
+        {
+            AnsiConsole.Clear();
+        }
         public void RenderGame()
         {
             AnsiConsole.Clear();
             Table dealerShoeInstructionsTable = new();
-            dealerShoeInstructionsTable.Border(TableBorder.Rounded);
+            dealerShoeInstructionsTable.Border(TableBorder.Heavy);
+            dealerShoeInstructionsTable.BorderColor(Color.DarkGreen);
             dealerShoeInstructionsTable.AddColumn("Dealer");
             dealerShoeInstructionsTable.AddColumn("Shoe");
             dealerShoeInstructionsTable.AddColumn("Keys");
@@ -31,25 +36,48 @@ namespace TwentyOne.Services
                 CreateShoeInfo(),
                 KeymapInfo());
 
-            Table playerBankrollTable = new();
-            playerBankrollTable.Border(TableBorder.Rounded);
-            playerBankrollTable.AddColumn("PlayerHand");
-            playerBankrollTable.AddColumn("Bankroll");
-            playerBankrollTable.Columns[0].Width = 53;
-            playerBankrollTable.Columns[1].Width = 20;
-            // Total adds up to 80 with padding and borders
-            playerBankrollTable.AddRow(
-                CreatePlayerHands(),
-                new Text($"${_gameState.Players[0].Bankroll}"));
+            List<Table> playerTables = [];
+            foreach(Player player in _gameState.Players)
+            {
+                playerTables.Add(CreatePlayerTable(player));
+            }
+            Columns playerColumns = new(playerTables);
+
+            Text infoText = new Text(_gameState.InfoString(), new Style(Color.Grey)).LeftJustified();
 
             Rows rowsToDisplay = new(
                 _headerText,
                 dealerShoeInstructionsTable,
                 new Text("Available actions will go here...", new Style(Color.Green)).LeftJustified(),
-                playerBankrollTable,
-                StatusMessageText());
+                playerColumns,
+                StatusMessageText(),
+                infoText);
 
             AnsiConsole.Write(rowsToDisplay);
+        }
+
+        private static Table CreatePlayerTable(Player player)
+        {
+            Table playerTable = new();
+            playerTable.Border(TableBorder.Heavy);
+            playerTable.BorderColor(Color.DarkCyan);
+            playerTable.AddColumn(player.Name);
+            playerTable.Columns[0].Width = 26;
+
+            Panel bankrollPanel = new($"{player.Bankroll}");
+            bankrollPanel.BorderColor(Color.Gold1);
+            bankrollPanel.Padding = new Padding(2, 2, 2, 2);
+            bankrollPanel.Header = new PanelHeader($"Bankroll");
+            bankrollPanel.Expand = true;
+
+            playerTable.AddRow(bankrollPanel);
+
+            foreach (var hand in player.HandsInPlay)
+            {
+                playerTable.AddRow(CreateHandPanel(hand));
+            }
+
+            return playerTable;
         }
 
         private Text StatusMessageText()
@@ -89,7 +117,7 @@ namespace TwentyOne.Services
             handPanel.Border = BoxBorder.Rounded;
             handPanel.BorderColor(Color.Silver);
             handPanel.Padding = new Padding(2, 2, 2, 2);
-            handPanel.Header = new PanelHeader($" Hand [[{GameService.HandValue(hand)}]] ");
+            handPanel.Header = new PanelHeader($" Hand [[ Value {GameService.HandValue(hand)} ]] ");
             return handPanel;
         }
 
