@@ -168,21 +168,46 @@ namespace TwentyOne.Services
             _gameState.StatusMessage = "Cards Dealt.";
         }
 
-        public static List<PlayerHandActions> AvailablePlayerActions(Hand hand)
+        public Player CurrentPlayer()
         {
-            var actions = new List<PlayerHandActions> { PlayerHandActions.Stand };
+            return _gameState.Players[_gameState.CurrentPlayerIndex];
+        }
 
-            if (hand.TotalCardCount == 2)
+        public Hand CurrentHand()
+        {
+            return CurrentPlayer().HandsInPlay[_gameState.CurrentHandIndex];
+        }
+
+        public List<PlayerHandActions> AvailablePlayerActions()
+        {
+            List<PlayerHandActions> actions = [];
+
+            switch (_gameState.CurrentGamePhase)
             {
-                actions.Add(PlayerHandActions.DoubleDown);
+                case GamePhase.Betting:
+                    actions.Add(PlayerHandActions.Bet);
+                    break;
+                case GamePhase.PlayerTurns:
+                    Hand hand = CurrentHand();
+                    if (HandIsBust(hand) || HandIsNatural(hand))
+                    {
+                        break;
+                    }
+                    actions.Add(PlayerHandActions.Hit);
+                    actions.Add(PlayerHandActions.Stand);
+                    if (hand.TotalCardCount == 2)
+                    {
+                        actions.Add(PlayerHandActions.DoubleDown);
 
-                if (CanSplitHand(hand))
-                {
-                    actions.Add(PlayerHandActions.Split);
-                }
+                        if (CanSplitHand(hand))
+                        {
+                            actions.Add(PlayerHandActions.Split);
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
-
-            actions.Add(PlayerHandActions.Hit);
 
             return actions;
         }
