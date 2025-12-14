@@ -130,7 +130,6 @@ namespace TwentyOne.Services
                 Shoe = new Shoe(shoeDeckCount),
                 DealerHand = new Hand(),
                 Players = [],
-                CurrentGamePhase = GamePhase.Betting
             };
 
             for (int i = 1; i <= playerCount; i++)
@@ -139,6 +138,7 @@ namespace TwentyOne.Services
             }
 
             _gameState.StatusMessage = "New game started.";
+            _gameState.CurrentGamePhase = GamePhase.Betting;
             return _gameState;
         }
 
@@ -212,60 +212,29 @@ namespace TwentyOne.Services
             return actions;
         }
 
-        // public void HandlePlayerAction(PlayerHandActions action)
-        // {
-        //     switch (action)
-        //     {
-        //         case PlayerHandActions.Hit:
-        //             PlayerHit();
-        //             break;
-        //         case PlayerHandActions.Stand:
-        //             HandleStandAction();
-        //             break;
-        //         case PlayerHandActions.DoubleDown:
-        //             HandleDoubleDownAction();
-        //             break;
-        //         case PlayerHandActions.Split:
-        //             HandleSplitAction();
-        //             break;
-        //     }
-
-        //     if (action == PlayerHandActions.Hit)
-        //     {
-        //     }
-        // }
-
-        private void AdvanceHandOrPlayer()
+        public void ContinueGame()
         {
-            int playerIndex = _gameState.CurrentPlayerIndex;
-            int handIndex = _gameState.CurrentHandIndex;
-
-            if (handIndex + 1 < _gameState.Players[playerIndex].HandsInPlay.Count)
-            {
-                // Move to next hand for current player
-                _gameState.CurrentHandIndex++;
-            }
-            else if (playerIndex + 1 < _gameState.Players.Count)
-            {
-                // Move to next player
-                _gameState.CurrentPlayerIndex++;
-                _gameState.CurrentHandIndex = 0;
-            }
-            else
-            {
-                // Move to next player
-                _gameState.CurrentPlayerIndex = 0;
-                _gameState.CurrentHandIndex = 0;
-            }
+            // TODO: add logic for advancing the game
         }
 
-        public void PlayerHit()
+        public void HandlePlayerAction(PlayerHandActions action)
         {
-            Card dealtCard = DealCardFromShoe();
-            int playerIndex = _gameState.CurrentPlayerIndex;
-            int handIndex = _gameState.CurrentHandIndex;
-            _gameState.Players[playerIndex].HandsInPlay[handIndex].AddCard(dealtCard);
-            _gameState.StatusMessage = "Player hits.";
+            // TODO: validate action and bail if not valid
+            switch (action)
+            {
+                case PlayerHandActions.Hit:
+                    PlayerHit();
+                    break;
+                case PlayerHandActions.Stand:
+                    PlayerStand();
+                    break;
+                case PlayerHandActions.DoubleDown:
+                    PlayerDoubleDown();
+                    break;
+                case PlayerHandActions.Split:
+                    PlayerSplit();
+                    break;
+            }
         }
 
         public static int HandValue(Hand hand)
@@ -315,9 +284,9 @@ namespace TwentyOne.Services
             return false;
         }
 
-        public bool DealerShouldDraw()
+        private static bool DealerShouldDraw(Hand hand)
         {
-            return HandValue(_gameState.DealerHand) < 17;
+            return HandValue(hand) < 17;
         }
 
         private static bool CanSplitHand(Hand hand)
@@ -327,6 +296,71 @@ namespace TwentyOne.Services
                 return true;
             }
             return false;
+        }
+
+        private void AdvanceHandOrPlayer()
+        {
+            int playerIndex = _gameState.CurrentPlayerIndex;
+            int handIndex = _gameState.CurrentHandIndex;
+
+            if (handIndex + 1 < _gameState.Players[playerIndex].HandsInPlay.Count)
+            {
+                // Move to next hand for current player
+                _gameState.CurrentHandIndex++;
+            }
+            else if (playerIndex + 1 < _gameState.Players.Count)
+            {
+                // Move to next player
+                _gameState.CurrentPlayerIndex++;
+                _gameState.CurrentHandIndex = 0;
+            }
+            else
+            {
+                // Move to next player
+                _gameState.CurrentPlayerIndex = 0;
+                _gameState.CurrentHandIndex = 0;
+            }
+        }
+
+        private void PlayerBet(decimal betAmount)
+        {
+            _gameState.StatusMessage = $"{CurrentPlayer().Name} bets ${betAmount}.";
+            AdvanceHandOrPlayer();
+        }
+
+        private void PlayerStand()
+        {
+            _gameState.StatusMessage = $"{CurrentPlayer().Name} stands.";
+            AdvanceHandOrPlayer();
+        }
+
+        private void PlayerDoubleDown()
+        {
+            _gameState.StatusMessage = $"{CurrentPlayer().Name} doubles down.";
+            // TODO: Logic to increase bet
+            AdvanceHandOrPlayer();
+        }
+
+        private void PlayerHit()
+        {
+            Card dealtCard = DealCardFromShoe();
+            int playerIndex = _gameState.CurrentPlayerIndex;
+            int handIndex = _gameState.CurrentHandIndex;
+            _gameState.Players[playerIndex].HandsInPlay[handIndex].AddCard(dealtCard);
+            _gameState.StatusMessage = $"{CurrentPlayer().Name} hits.";
+            AdvanceHandOrPlayer();
+        }
+
+        private void PlayerSplit()
+        {
+            Hand currentHand = CurrentHand();
+            int playerIndex = _gameState.CurrentPlayerIndex;
+            _gameState.Players[playerIndex].HandsInPlay.Clear();
+            _gameState.Players[playerIndex].HandsInPlay.Add(new Hand());
+            _gameState.Players[playerIndex].HandsInPlay.Add(new Hand());
+            _gameState.Players[playerIndex].HandsInPlay[0].AddCard(currentHand.CardsInHand[0]);
+            _gameState.Players[playerIndex].HandsInPlay[1].AddCard(currentHand.CardsInHand[1]);
+            _gameState.StatusMessage = $"{CurrentPlayer().Name} splits.";
         }
 
         private Card DealCardFromShoe()
