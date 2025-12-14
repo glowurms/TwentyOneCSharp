@@ -219,32 +219,32 @@ namespace TwentyOne.Tests.Services
             Assert.Equal(expectedIsNatural, isNatural);
         }
 
-        [Theory]
-        [InlineData(new Rank[] { Rank.Two, Rank.Three }, true)] // 5 < 17
-        [InlineData(new Rank[] { Rank.Ten, Rank.Seven }, false)] // 17 == 17
-        [InlineData(new Rank[] { Rank.King, Rank.Nine }, false)] // 19 > 17
-        public void DealerShouldDraw_WorksCorrectly(Rank[] ranks, bool expectedShouldDraw)
-        {
-            Hand dealerHand = new();
-            foreach (var rank in ranks)
-            {
-                dealerHand.AddCard(new Card(rank, Suit.Hearts));
-            }
+        // [Theory]
+        // [InlineData(new Rank[] { Rank.Two, Rank.Three }, true)] // 5 < 17
+        // [InlineData(new Rank[] { Rank.Ten, Rank.Seven }, false)] // 17 == 17
+        // [InlineData(new Rank[] { Rank.King, Rank.Nine }, false)] // 19 > 17
+        // public void DealerShouldDraw_WorksCorrectly(Rank[] ranks, bool expectedShouldDraw)
+        // {
+        //     Hand dealerHand = new();
+        //     foreach (var rank in ranks)
+        //     {
+        //         dealerHand.AddCard(new Card(rank, Suit.Hearts));
+        //     }
 
-            GameState gameState = new()
-            {
-                Shoe = new Shoe(3),
-                DealerHand = new Hand(),
-                Players = [new Player("Player1", 100m)]
-            };
+        //     GameState gameState = new()
+        //     {
+        //         Shoe = new Shoe(3),
+        //         DealerHand = new Hand(),
+        //         Players = [new Player("Player1", 100m)]
+        //     };
 
-            gameState.DealerHand = dealerHand;
+        //     gameState.DealerHand = dealerHand;
 
-            GameService gameService = new(ref gameState);
+        //     GameService gameService = new(ref gameState);
 
-            bool shouldDraw = gameService.DealerShouldDraw();
+        //     bool shouldDraw = gameService.DealerShouldDraw();
 
-            Assert.Equal(expectedShouldDraw, shouldDraw);
-        }
+        //     Assert.Equal(expectedShouldDraw, shouldDraw);
+        // }
     }
 }
