@@ -5,72 +5,116 @@ namespace TwentyOne.Tests.Services
 {
     public class GameServiceTest
     {
-        [Fact]
-        public void StartNewGame_InitializesGameStateCorrectly()
+        [Theory]
+        [InlineData(500, 6, 1)]
+        [InlineData(300, 4, 2)]
+        [InlineData(200, 8, 6)]
+        public void StartNewGame_InitializesGameStateCorrectly(int bankRollAmount, int shoeCount, int playerCount)
         {
-            GameService gameServiceOnePlayer = new();
-            GameState gameStateOnePlayer = gameServiceOnePlayer.StartNewGame(500, 6, 1);
+            GameService gameService = new();
+            GameState gameState = gameService.StartNewGame(bankRollAmount, shoeCount, playerCount);
 
-            GameService gameServiceTwoPlayers = new();
-            GameState gameStateTwoPlayers = gameServiceTwoPlayers.StartNewGame(500, 6, 2);
+            Assert.Equal(shoeCount, gameState.Shoe.DeckCount);
+            Assert.Equal(playerCount, gameState.Players.Count);
+            Assert.Equal(GamePhase.Betting, gameState.CurrentGamePhase);
 
-            Assert.Single(gameStateOnePlayer.Players);
-            Assert.Equal(500, gameStateOnePlayer.Players[0].Bankroll);
-            Assert.Equal(GamePhase.Betting, gameStateOnePlayer.CurrentGamePhase);
-
-            Assert.Equal(2, gameStateTwoPlayers.Players.Count);
-            Assert.Equal(500, gameStateTwoPlayers.Players[0].Bankroll);
-            Assert.Equal(500, gameStateTwoPlayers.Players[1].Bankroll);
-            Assert.Equal(GamePhase.Betting, gameStateTwoPlayers.CurrentGamePhase);
+            foreach(Player player in gameState.Players)
+            {
+                Assert.Equal(bankRollAmount, player.Bankroll);
+            }
         }
 
-        [Fact]
-        public void DealInitialCards_WorksCorrectly()
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(6)]
+        public void DealInitialCards_WorksCorrectly(int playerCount)
         {
-            GameService gameServiceOnePlayer = new();
-            GameState gameStateOnePlayer = gameServiceOnePlayer.StartNewGame(500, 6, 1);
+            GameService gameService = new();
+            GameState gameState = gameService.StartNewGame(500, 6, playerCount);
 
-            GameService gameServiceTwoPlayers = new();
-            GameState gameStateTwoPlayers = gameServiceTwoPlayers.StartNewGame(500, 6, 2);
+            gameService.DealInitialCards();
 
-            gameServiceOnePlayer.DealInitialCards();
-            gameServiceTwoPlayers.DealInitialCards();
+            int cardsInPlayCount = (playerCount * 2) + 2; // 2 Cards to each player and the dealer
 
-            Assert.Equal(2, gameStateOnePlayer.DealerHand.TotalCardCount);
-            Assert.Equal(2, gameStateOnePlayer.Players[0].HandsInPlay[0].TotalCardCount);
+            Assert.Equal(2, gameState.DealerHand.TotalCardCount);
+
+            foreach(Player player in gameState.Players)
+            {
+                foreach(Hand hand in player.HandsInPlay)
+                {
+                    Assert.Equal(2, hand.TotalCardCount);
+                }
+            }
             // Each player and the dealer has 2 cards, so total 4 cards dealt
-            Assert.Equal(gameStateOnePlayer.Shoe.TotalCardCount - 4, gameStateOnePlayer.Shoe.UndealtCardCount);
-
-            Assert.Equal(2, gameStateTwoPlayers.DealerHand.TotalCardCount);
-            Assert.Equal(2, gameStateTwoPlayers.Players[0].HandsInPlay[0].TotalCardCount);
-            Assert.Equal(2, gameStateTwoPlayers.Players[1].HandsInPlay[0].TotalCardCount);
-            // Each player and the dealer has 2 cards, so total 6 cards dealt
-            Assert.Equal(gameStateTwoPlayers.Shoe.TotalCardCount - 6, gameStateTwoPlayers.Shoe.UndealtCardCount);
+            Assert.Equal(gameState.Shoe.TotalCardCount - cardsInPlayCount, gameState.Shoe.UndealtCardCount);
         }
 
-        [Fact]
-        public void AvailablePlayerActions_ReturnsCorrectActions()
+        [Theory]
+        // Bet should be only option in Betting phase. Cards shouldn't matter or even be dealt in scenario
+        [InlineData(
+            new Rank[] {},
+            GamePhase.Betting, 
+            new PlayerHandActions[] {
+                PlayerHandActions.Bet
+            })]
+        // Excludes: Bet
+        [InlineData(
+            new Rank[] { Rank.Eight, Rank.Eight },
+            GamePhase.PlayerTurns, 
+            new PlayerHandActions[] {
+                PlayerHandActions.Hit, PlayerHandActions.Stand, PlayerHandActions.DoubleDown, PlayerHandActions.Split
+            })] 
+        // Excludes: Split, Bet
+        [InlineData(
+            new Rank[] { Rank.Five, Rank.Ten },
+            GamePhase.PlayerTurns, 
+            new PlayerHandActions[] {
+                PlayerHandActions.Hit, PlayerHandActions.Stand, PlayerHandActions.DoubleDown
+            })]
+        // Excludes: Split, DoubleDown, Bet
+        [InlineData(
+            new Rank[] { Rank.Two, Rank.Ten, Rank.Eight },
+            GamePhase.PlayerTurns, 
+            new PlayerHandActions[] {
+                PlayerHandActions.Hit, PlayerHandActions.Stand
+            })]
+        // Hand is Natural. No actions available
+        [InlineData(
+            new Rank[] { Rank.Ace, Rank.Jack },
+            GamePhase.PlayerTurns, 
+            new PlayerHandActions[] {
+            })]
+        // Hand is bust. No actions available
+        [InlineData(
+            new Rank[] { Rank.Two, Rank.Ten, Rank.Eight, Rank.Nine },
+            GamePhase.PlayerTurns, 
+            new PlayerHandActions[] {
+            })]
+        public void AvailablePlayerActions_ReturnsCorrectActions(Rank[] ranks, GamePhase gamePhase, PlayerHandActions[] expectedActions)
         {
+            // Split setup
             Hand hand = new();
-            hand.AddCard(new Card(Rank.Eight, Suit.Hearts));
-            hand.AddCard(new Card(Rank.Eight, Suit.Spades));
+            foreach (Rank rank in ranks)
+            {
+                hand.AddCard(new Card(rank, Suit.Hearts)); // Suit doesn't matter here
+            }
 
-            Hand handNoSplit = new();
-            handNoSplit.AddCard(new Card(Rank.Eight, Suit.Hearts));
-            handNoSplit.AddCard(new Card(Rank.Five, Suit.Spades));
+            Player player = new("Player", 500);
+            player.HandsInPlay.Add(hand);
 
-            var actions = GameService.AvailablePlayerActions(hand);
-            var actionsNoSplit = GameService.AvailablePlayerActions(handNoSplit);
+            // Simulate game state player turn
+            GameState gamestate = new();
+            gamestate.Players.Add(player);
+            gamestate.CurrentGamePhase = gamePhase;
 
-            Assert.Contains(PlayerHandActions.Hit, actions);
-            Assert.Contains(PlayerHandActions.Stand, actions);
-            Assert.Contains(PlayerHandActions.DoubleDown, actions);
-            Assert.Contains(PlayerHandActions.Split, actions);
+            GameService gameService = new(ref gamestate);
 
-            Assert.Contains(PlayerHandActions.Hit, actionsNoSplit);
-            Assert.Contains(PlayerHandActions.Stand, actionsNoSplit);
-            Assert.Contains(PlayerHandActions.DoubleDown, actionsNoSplit);
-            Assert.DoesNotContain(PlayerHandActions.Split, actionsNoSplit);
+            // Get actions for each case
+            List<PlayerHandActions> actualactions = gameService.AvailablePlayerActions();
+
+
+            Assert.Equal(actualactions.OrderDescending(), expectedActions.OrderDescending());
         }
 
         [Theory]
