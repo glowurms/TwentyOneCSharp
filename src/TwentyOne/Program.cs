@@ -10,8 +10,8 @@ namespace TwentyOne
             bool running = true;
 
             GameService gameService = new();
-            GameState gameState = gameService.StartNewGame(500, 6, 3);
-            GameDisplayService gameDisplay = new(ref gameState);
+            gameService.StartNewGame(500, 6, 3);
+            GameDisplayService gameDisplay = new(ref gameService);
 
             gameService.DealInitialCards();
 

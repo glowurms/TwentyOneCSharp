@@ -6,11 +6,12 @@ namespace TwentyOne.Services
     public class GameDisplayService
     {
         private Text _headerText;
-        private GameState _gameState;
+        private GameService _gameService;
+        private GameState _gameState { get { return _gameService.GameState; } }
 
-        public GameDisplayService(ref GameState gameState)
+        public GameDisplayService(ref GameService gameService)
         {
-            _gameState = gameState;
+            _gameService = gameService;
             _headerText = new Text("TwentyOne Game", new Style(Color.Aqua)).LeftJustified();
         }
 
