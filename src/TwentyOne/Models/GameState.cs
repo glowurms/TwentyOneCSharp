@@ -7,11 +7,12 @@ namespace TwentyOne.Models
         public List<Player> Players { get; set; } = [];
         public List<PlayerHandActions> AvailableActions { get; set; } = [];
         public string StatusMessage { get; set; } = "Status Message Here";
+        public string InfoMessage { get; set; } = "Info Message Here";
         public GamePhase CurrentGamePhase { get; set; } = GamePhase.Betting;
         public int CurrentPlayerIndex { get; set; } = 0;
         public int CurrentHandIndex { get; set; } = 0;
 
-        public string InfoString() 
+        public string GameStateInfo() 
         {
             string rule = "====================================================";
             string thinRule = "----------------------------------------------------";
