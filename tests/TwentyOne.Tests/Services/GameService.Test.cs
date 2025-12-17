@@ -6,16 +6,22 @@ namespace TwentyOne.Tests.Services
     public class GameServiceTest
     {
         [Theory]
-        [InlineData(500, 6, 1)]
-        [InlineData(300, 4, 2)]
-        [InlineData(200, 8, 6)]
-        public void StartNewGame_InitializesGameStateCorrectly(int bankRollAmount, int shoeCount, int playerCount)
+        [InlineData(-1, 500, 6)]
+        [InlineData(0, 300, 4)]
+        [InlineData(1, 200, 8)]
+        [InlineData(2, 500, 6)]
+        [InlineData(6, 300, 4)]
+        [InlineData(7, 200, 8)]
+        [InlineData(10, 200, 8)]
+        public void StartNewGame_InitializesGameStateCorrectly(int requestedPlayerCount, int bankRollAmount, int shoeCount)
         {
             GameService gameService = new();
-            GameState gameState = gameService.StartNewGame(bankRollAmount, shoeCount, playerCount);
+            GameState gameState = gameService.StartNewGame(requestedPlayerCount, bankRollAmount, shoeCount);
+
+            int expectedPlayerCount = Math.Min(GameService.MaxPlayers, Math.Max(GameService.MinPlayers, requestedPlayerCount));
 
             Assert.Equal(shoeCount, gameState.Shoe.DeckCount);
-            Assert.Equal(playerCount, gameState.Players.Count);
+            Assert.Equal(expectedPlayerCount, gameState.Players.Count);
             Assert.Equal(GamePhase.Betting, gameState.CurrentGamePhase);
 
             foreach(Player player in gameState.Players)
@@ -25,17 +31,21 @@ namespace TwentyOne.Tests.Services
         }
 
         [Theory]
+        [InlineData(-1)]
+        [InlineData(0)]
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(6)]
-        public void DealInitialCards_WorksCorrectly(int playerCount)
+        [InlineData(7)]
+        [InlineData(10)]
+        public void DealInitialCards_WorksCorrectly(int requestedPlayerCount)
         {
             GameService gameService = new();
-            GameState gameState = gameService.StartNewGame(500, 6, playerCount);
+            GameState gameState = gameService.StartNewGame(requestedPlayerCount, 500, 6);
 
             gameService.DealInitialCards();
 
-            int cardsInPlayCount = (playerCount * 2) + 2; // 2 Cards to each player and the dealer
+            int cardsInPlayCount = (gameState.Players.Count * 2) + 2; // 2 Cards to each player and the dealer
 
             Assert.Equal(2, gameState.DealerHand.TotalCardCount);
 
@@ -113,9 +123,23 @@ namespace TwentyOne.Tests.Services
             // Get actions for each case
             List<PlayerHandActions> actualactions = gameService.AvailablePlayerActions();
 
-
             Assert.Equal(actualactions.OrderDescending(), expectedActions.OrderDescending());
         }
+
+        // [Fact]
+        // public void ContinueGame_WorksCorrectly()
+        // {
+        //     // TODO: Add tests when completing function
+        // }
+
+        // [Theory]
+        // [InlineData(
+        //     PlayerHandActions.Bet,
+        //     new List<PlayerHandActions>() { PlayerHandActions.Bet })]
+        // public void HandlePlayerAction_WorksCorrectly(PlayerHandActions requestedAction, List<PlayerHandActions> availableActions)
+        // {
+        //     // TODO: Add tests when completing function
+        // }
 
         [Theory]
         // General card value scenarios
@@ -123,35 +147,29 @@ namespace TwentyOne.Tests.Services
         [InlineData(new Rank[] { Rank.Two, Rank.Three, Rank.Four }, 9)]
         [InlineData(new Rank[] { Rank.Two, Rank.Three, Rank.Four, Rank.Five }, 14)]
         [InlineData(new Rank[] { Rank.Five, Rank.Six, Rank.Ten }, 21)]
-
         // Ace scenarios
         [InlineData(new Rank[] { Rank.Ace, Rank.Five }, 16)]
         [InlineData(new Rank[] { Rank.Ace, Rank.Ten }, 21)]
         [InlineData(new Rank[] { Rank.Ace, Rank.Jack }, 21)]
         [InlineData(new Rank[] { Rank.Ace, Rank.Queen }, 21)]
         [InlineData(new Rank[] { Rank.Ace, Rank.King }, 21)]
-
         // Mutiple Ace scenarios
         [InlineData(new Rank[] { Rank.Ace, Rank.Ace, Rank.Nine }, 21)]
         [InlineData(new Rank[] { Rank.Ace, Rank.Ace, Rank.Ace }, 13)]
-
         // 7 Ace scenario (unlikely but possible in testing)
         [InlineData(new Rank[] { 
             Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace,
             Rank.Ace, Rank.Ace }, 17)]
-
         // 11 Ace scenario (unlikely but possible in testing)
         [InlineData(new Rank[] { 
             Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, 
             Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace,
             Rank.Ace }, 21)]
-
         // 12 Ace scenario (unlikely but possible in testing)
         [InlineData(new Rank[] { 
             Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, 
             Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace,
             Rank.Ace, Rank.Ace }, 12)]
-
         public void HandValue_CalculatesCorrectly(Rank[] ranks, int expectedValue)
         {
             Hand hand = new();
