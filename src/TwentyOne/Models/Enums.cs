@@ -31,6 +31,6 @@ namespace TwentyOne.Models
 
     public enum PlayerGameActions
     {
-        Instructions, Quit
+        Continue, Cancel, Instructions, Quit
     }
 }

@@ -9,6 +9,25 @@ namespace TwentyOne
         {
             bool running = true;
 
+            // Key bindings for game actions
+            Dictionary<ConsoleKey, PlayerGameActions> GameActionKeys = new()
+            {
+                { ConsoleKey.Spacebar, PlayerGameActions.Continue },
+                { ConsoleKey.Escape, PlayerGameActions.Cancel },
+                { ConsoleKey.I, PlayerGameActions.Instructions },
+                { ConsoleKey.Q, PlayerGameActions.Quit }
+            };
+
+            // Key bindings for player actions
+            Dictionary<ConsoleKey, PlayerHandActions> PlayerActionKeys = new()
+            {
+                { ConsoleKey.B, PlayerHandActions.Bet },
+                { ConsoleKey.F, PlayerHandActions.Hit },
+                { ConsoleKey.S, PlayerHandActions.Stand },
+                { ConsoleKey.D, PlayerHandActions.DoubleDown },
+                { ConsoleKey.A, PlayerHandActions.Split }
+            };
+
             GameService gameService = new();
             gameService.StartNewGame(3, 500, 6);
             // GameDisplayService gameDisplay = new(ref gameService);
@@ -18,11 +37,29 @@ namespace TwentyOne
                 // gameDisplay.RenderGame();
                 Console.Clear();
                 Console.WriteLine(gameService.GameStateInfo);
-                ConsoleKeyInfo playerInput = Console.ReadKey();
-                if (GameService.GameActionKeys[PlayerGameActions.Quit] == playerInput.Key)
+                ConsoleKeyInfo playerInput = Console.ReadKey(true);
+
+                if (GameActionKeys.TryGetValue(playerInput.Key, out PlayerGameActions gameAction))
                 {
-                    running = false;
+                    switch (gameAction)
+                    {
+                        case PlayerGameActions.Cancel:
+                            running = false;
+                            break;
+                        case PlayerGameActions.Quit:
+                            running = false;
+                            break;
+                        case PlayerGameActions.Continue:
+                            gameService.ContinueGame();
+                            break;
+                        default:
+                            break;
+                    }
                     // GameDisplayService.ClearGame();
+                }
+                else if (PlayerActionKeys.TryGetValue(playerInput.Key, out PlayerHandActions playerHandAction))
+                {
+                    gameService.HandlePlayerAction(playerHandAction);
                 }
             }
         }

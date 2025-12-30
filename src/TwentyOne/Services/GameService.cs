@@ -90,24 +90,6 @@ namespace TwentyOne.Services
             { PlayerHandActions.Split, "Split your hand into two hands" }
         };
 
-        // TODO: Move this to a UI service
-        // Key bindings for player actions
-        public static readonly Dictionary<PlayerHandActions, ConsoleKey> ActionKeys = new()
-        {
-            { PlayerHandActions.Bet, ConsoleKey.B },
-            { PlayerHandActions.Hit, ConsoleKey.Spacebar },
-            { PlayerHandActions.Stand, ConsoleKey.S },
-            { PlayerHandActions.DoubleDown, ConsoleKey.D },
-            { PlayerHandActions.Split, ConsoleKey.F }
-        };
-
-        // TODO: Move this to a UI service
-        // Key bindings for game actions
-        public static readonly Dictionary<PlayerGameActions, ConsoleKey> GameActionKeys = new()
-        {
-            { PlayerGameActions.Instructions, ConsoleKey.I },
-            { PlayerGameActions.Quit, ConsoleKey.Q }
-        };
         public static readonly int MinPlayers = 1;
         public static readonly int MaxPlayers = 6;
         public static readonly decimal BetAmount = 2m;
