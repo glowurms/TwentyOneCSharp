@@ -120,16 +120,82 @@ namespace TwentyOne.Services
 
         public GameService()
         {
-            _gameState = new()
-            {
-                InfoMessage = ""
-            };
+            _gameState = new();
         }
 
         public GameService(ref GameState gameState)
         {
             _gameState = gameState;
-            _gameState.InfoMessage = "Loaded game state.";
+        }
+
+        public string StatusMessage 
+        { 
+            get {
+                if (_gameState.CurrentGamePhase == GamePhase.Betting) return "Taking Bets.";
+                if (_gameState.CurrentGamePhase == GamePhase.Betting) return "Cards Dealt.";
+                if (_gameState.CurrentGamePhase == GamePhase.PlayerTurns) return "Player Turn";
+                if (_gameState.CurrentGamePhase == GamePhase.DealerTurn) return "Dealer Turn";
+                if (_gameState.CurrentGamePhase == GamePhase.RoundEnd) return "Round End";
+                return "";
+            }
+        }
+
+        public string InfoMessage 
+        {
+            get
+            {
+                if (_gameState.CurrentGamePhase == GamePhase.Betting)
+                {
+                    return $"{_currentPlayer.Name}'s turn to bet.";
+                }
+                if (_gameState.CurrentGamePhase == GamePhase.PlayerTurns)
+                {
+                    if(AvailablePlayerActions().Count > 0)
+                    {
+                        return $"{_currentPlayer.Name}'s turn. Available actions: {string.Join(", ", AvailablePlayerActions())}";
+                    }
+                }
+                return "";
+            }
+        }
+
+        public string GameStateInfo {
+            get
+            {
+                string rule = "====================================================";
+                string thinRule = "----------------------------------------------------";
+                List<string> gameInfo = [];
+                gameInfo.Add(rule);
+
+                // Basic game state info
+                gameInfo.Add($"GamePhase: {_gameState.CurrentGamePhase}, Players: {_gameState.Players.Count}, CardsLeft: {_gameState.Shoe.UndealtCardCount}");
+
+                // Dealer info
+                gameInfo.Add(thinRule);
+                gameInfo.Add("Dealer:");
+                gameInfo.Add(_gameState.DealerHand.HandInfo());
+
+                // Player info
+                foreach (Player player in _gameState.Players)
+                {
+                    gameInfo.Add(thinRule);
+                    gameInfo.Add(player.PlayerInfo());
+
+                    // Hands info
+                    foreach (Hand hand in player.HandsInPlay)
+                    {
+                        gameInfo.Add(hand.HandInfo());
+                    }
+                }
+
+                gameInfo.Add(thinRule);
+                gameInfo.Add(StatusMessage);
+                gameInfo.Add(thinRule);
+                gameInfo.Add(InfoMessage);
+
+                gameInfo.Add(rule);
+                return string.Join("\n", gameInfo);
+            }
         }
 
         public GameState StartNewGame(int playerCount = 1, decimal startingBankroll = 500m, int shoeDeckCount = 6)
@@ -146,12 +212,12 @@ namespace TwentyOne.Services
             if (playerCount < MinPlayers)
             {
                 playersToAdd = MinPlayers;
-                _gameState.InfoMessage = $"Minimum player count is {MinPlayers}.";
+                // _gameState.InfoMessage = $"Minimum player count is {MinPlayers}.";
             }
             else if (playerCount > MaxPlayers)
             {
                 playersToAdd = MaxPlayers;
-                _gameState.InfoMessage = $"Maximum player count is {MaxPlayers}.";
+                // _gameState.InfoMessage = $"Maximum player count is {MaxPlayers}.";
             }
 
             for (int i = 1; i <= playersToAdd; i++)
@@ -160,7 +226,7 @@ namespace TwentyOne.Services
             }
 
             string pluralizePlayers = (_gameState.Players.Count > 1) ? "s" : "";
-            _gameState.StatusMessage = $"New game created with {playersToAdd} player{pluralizePlayers}.";
+            // _gameState.StatusMessage = $"New game created with {playersToAdd} player{pluralizePlayers}.";
             _gameState.CurrentGamePhase = GamePhase.Betting;
             return _gameState;
         }
@@ -188,10 +254,7 @@ namespace TwentyOne.Services
                 player.HandsInPlay[0].AddCard(DealCard());
             }
             _gameState.DealerHand.AddCard(DealCard());
-            _gameState.StatusMessage = "Cards Dealt.";
-            _gameState.InfoMessage = "Taking bets.";
         }
-
 
         public List<PlayerHandActions> AvailablePlayerActions()
         {
@@ -353,13 +416,13 @@ namespace TwentyOne.Services
             decimal bet = Math.Min(_currentPlayer.Bankroll, BetAmount);
             _currentPlayer.Bankroll -= bet;
             _currentPlayer.Bet += bet;
-            _gameState.InfoMessage = $"{_currentPlayer.Name} bets ${bet}.";
+            // _gameState.InfoMessage = $"{_currentPlayer.Name} bets ${bet}.";
             AdvanceHandOrPlayer();
         }
 
         private void PlayerStand()
         {
-            _gameState.InfoMessage = $"{_currentPlayer.Name} stands.";
+            // _gameState.InfoMessage = $"{_currentPlayer.Name} stands.";
             AdvanceHandOrPlayer();
         }
 
@@ -368,14 +431,14 @@ namespace TwentyOne.Services
             decimal bet = _currentPlayer.Bet;
             _currentPlayer.Bankroll -= bet;
             _currentPlayer.Bet += bet;
-            _gameState.InfoMessage = $"{_currentPlayer.Name} doubles down.";
+            // _gameState.InfoMessage = $"{_currentPlayer.Name} doubles down.";
             AdvanceHandOrPlayer();
         }
 
         private void PlayerHit()
         {
             _currentHand.AddCard(DealCard());
-            _gameState.InfoMessage = $"{_currentPlayer.Name} hits.";
+            // _gameState.InfoMessage = $"{_currentPlayer.Name} hits.";
         }
 
         private void PlayerSplit()
@@ -387,7 +450,7 @@ namespace TwentyOne.Services
             _currentPlayer.HandsInPlay.Clear();
             _currentPlayer.HandsInPlay.Add(splitHandOne);
             _currentPlayer.HandsInPlay.Add(splitHandTwo);
-            _gameState.InfoMessage = $"{_currentPlayer.Name} splits.";
+            // _gameState.InfoMessage = $"{_currentPlayer.Name} splits.";
         }
 
         private Card DealCard()

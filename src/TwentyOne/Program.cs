@@ -11,13 +11,13 @@ namespace TwentyOne
 
             GameService gameService = new();
             gameService.StartNewGame(3, 500, 6);
-            GameDisplayService gameDisplay = new(ref gameService);
-
-            gameService.DealInitialCards();
+            // GameDisplayService gameDisplay = new(ref gameService);
 
             while (running)
             {
-                gameDisplay.RenderGame();
+                // gameDisplay.RenderGame();
+                Console.Clear();
+                Console.WriteLine(gameService.GameStateInfo);
                 ConsoleKeyInfo playerInput = Console.ReadKey();
                 if (GameService.GameActionKeys[PlayerGameActions.Quit] == playerInput.Key)
                 {

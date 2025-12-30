@@ -44,7 +44,7 @@ namespace TwentyOne.Services
             }
             Columns playerColumns = new(playerTables);
 
-            Text infoText = new Text(_gameState.GameStateInfo, new Style(Color.Grey)).LeftJustified();
+            Text infoText = new Text(_gameService.GameStateInfo, new Style(Color.Grey)).LeftJustified();
 
             Rows rowsToDisplay = new(
                 _headerText,
@@ -83,7 +83,7 @@ namespace TwentyOne.Services
 
         private Text StatusMessageText()
         {
-            return new Text(_gameState.StatusMessage, new Style(Color.Yellow)).LeftJustified();
+            return new Text(_gameService.StatusMessage, new Style(Color.Yellow)).LeftJustified();
         }
 
         private static Rows KeymapInfo()
