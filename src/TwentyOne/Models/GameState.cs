@@ -12,36 +12,38 @@ namespace TwentyOne.Models
         public int CurrentPlayerIndex { get; set; } = 0;
         public int CurrentHandIndex { get; set; } = 0;
 
-        public string GameStateInfo() 
-        {
-            string rule = "====================================================";
-            string thinRule = "----------------------------------------------------";
-            List<string> gameInfo = [];
-            gameInfo.Add(rule);
-
-            // Basic game state info
-            gameInfo.Add($"GamePhase: {CurrentGamePhase}, Players: {Players.Count}, CardsLeft: {Shoe.UndealtCardCount}");
-
-            // Dealer info
-            gameInfo.Add(thinRule);
-            gameInfo.Add("Dealer:");
-            gameInfo.Add(DealerHand.HandInfo());
-
-            // Player info
-            foreach (Player player in Players)
+        public string GameStateInfo {
+            get
             {
+                string rule = "====================================================";
+                string thinRule = "----------------------------------------------------";
+                List<string> gameInfo = [];
+                gameInfo.Add(rule);
+
+                // Basic game state info
+                gameInfo.Add($"GamePhase: {CurrentGamePhase}, Players: {Players.Count}, CardsLeft: {Shoe.UndealtCardCount}");
+
+                // Dealer info
                 gameInfo.Add(thinRule);
-                gameInfo.Add(player.PlayerInfo());
+                gameInfo.Add("Dealer:");
+                gameInfo.Add(DealerHand.HandInfo());
 
-                // Hands info
-                foreach (Hand hand in player.HandsInPlay)
+                // Player info
+                foreach (Player player in Players)
                 {
-                    gameInfo.Add(hand.HandInfo());
-                }
-            }
+                    gameInfo.Add(thinRule);
+                    gameInfo.Add(player.PlayerInfo());
 
-            gameInfo.Add(rule);
-            return string.Join("\n", gameInfo);
+                    // Hands info
+                    foreach (Hand hand in player.HandsInPlay)
+                    {
+                        gameInfo.Add(hand.HandInfo());
+                    }
+                }
+
+                gameInfo.Add(rule);
+                return string.Join("\n", gameInfo);
+            }
         }
     }
 }
