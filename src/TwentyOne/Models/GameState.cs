@@ -41,6 +41,11 @@ namespace TwentyOne.Models
                     }
                 }
 
+                gameInfo.Add(thinRule);
+                gameInfo.Add(StatusMessage);
+                gameInfo.Add(thinRule);
+                gameInfo.Add(InfoMessage);
+
                 gameInfo.Add(rule);
                 return string.Join("\n", gameInfo);
             }
