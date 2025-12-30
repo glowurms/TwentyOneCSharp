@@ -416,13 +416,11 @@ namespace TwentyOne.Services
             decimal bet = Math.Min(_currentPlayer.Bankroll, BetAmount);
             _currentPlayer.Bankroll -= bet;
             _currentPlayer.Bet += bet;
-            // _gameState.InfoMessage = $"{_currentPlayer.Name} bets ${bet}.";
             AdvanceHandOrPlayer();
         }
 
         private void PlayerStand()
         {
-            // _gameState.InfoMessage = $"{_currentPlayer.Name} stands.";
             AdvanceHandOrPlayer();
         }
 
@@ -431,14 +429,12 @@ namespace TwentyOne.Services
             decimal bet = _currentPlayer.Bet;
             _currentPlayer.Bankroll -= bet;
             _currentPlayer.Bet += bet;
-            // _gameState.InfoMessage = $"{_currentPlayer.Name} doubles down.";
             AdvanceHandOrPlayer();
         }
 
         private void PlayerHit()
         {
             _currentHand.AddCard(DealCard());
-            // _gameState.InfoMessage = $"{_currentPlayer.Name} hits.";
         }
 
         private void PlayerSplit()
@@ -450,7 +446,6 @@ namespace TwentyOne.Services
             _currentPlayer.HandsInPlay.Clear();
             _currentPlayer.HandsInPlay.Add(splitHandOne);
             _currentPlayer.HandsInPlay.Add(splitHandTwo);
-            // _gameState.InfoMessage = $"{_currentPlayer.Name} splits.";
         }
 
         private Card DealCard()
