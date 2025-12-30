@@ -44,7 +44,7 @@ namespace TwentyOne.Services
             }
             Columns playerColumns = new(playerTables);
 
-            Text infoText = new Text(_gameState.GameStateInfo(), new Style(Color.Grey)).LeftJustified();
+            Text infoText = new Text(_gameState.GameStateInfo, new Style(Color.Grey)).LeftJustified();
 
             Rows rowsToDisplay = new(
                 _headerText,
