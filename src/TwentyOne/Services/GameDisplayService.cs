@@ -90,17 +90,17 @@ namespace TwentyOne.Services
         {
             List<Markup> instructionMarkups = [];
 
-            foreach (var action in GameService.ActionKeys)
-            {
-                instructionMarkups.Add(new Markup($"[bold][[{action.Value}]][/] - {action.Key}"));
-            }
+            // foreach (var action in GameService.ActionKeys)
+            // {
+            //     instructionMarkups.Add(new Markup($"[bold][[{action.Value}]][/] - {action.Key}"));
+            // }
 
-            instructionMarkups.Add(new Markup("----").Centered());
+            // instructionMarkups.Add(new Markup("----").Centered());
 
-            foreach (var action in GameService.GameActionKeys)
-            {
-                instructionMarkups.Add(new Markup($"[bold][[{action.Value}]][/] - {action.Key}"));
-            }
+            // foreach (var action in GameService.GameActionKeys)
+            // {
+            //     instructionMarkups.Add(new Markup($"[bold][[{action.Value}]][/] - {action.Key}"));
+            // }
 
             return new Rows(instructionMarkups);
         }
