@@ -90,6 +90,16 @@ namespace TwentyOne.Services
             { PlayerHandActions.Split, "Split your hand into two hands" }
         };
 
+        public static readonly Dictionary<PlayerHandActions, string> ActionTakenText = new()
+        {
+            { PlayerHandActions.Bet, "places a bet" },
+            { PlayerHandActions.Hit, "hits and gets another card" },
+            { PlayerHandActions.Stand, "stays" },
+            { PlayerHandActions.DoubleDown, "doubles down and gets one more card" },
+            { PlayerHandActions.Split, "splits" },
+            { PlayerHandActions.None, "has no action to take" }
+        };
+
         public static readonly int MinPlayers = 1;
         public static readonly int MaxPlayers = 6;
         public static readonly decimal BetAmount = 2m;
@@ -126,10 +136,16 @@ namespace TwentyOne.Services
         {
             get
             {
+                if(_currentPlayer.CurrentAction != PlayerHandActions.None)
+                {
+                    return $"{_currentPlayer.Name} {ActionTakenText[_currentPlayer.CurrentAction]}.";
+                }
+
                 if (_gameState.CurrentGamePhase == GamePhase.Betting)
                 {
                     return $"{_currentPlayer.Name}'s turn to bet.";
                 }
+
                 if (_gameState.CurrentGamePhase == GamePhase.PlayerTurns)
                 {
                     if(AvailablePlayerActions().Count > 0)
@@ -194,12 +210,10 @@ namespace TwentyOne.Services
             if (playerCount < MinPlayers)
             {
                 playersToAdd = MinPlayers;
-                // _gameState.InfoMessage = $"Minimum player count is {MinPlayers}.";
             }
             else if (playerCount > MaxPlayers)
             {
                 playersToAdd = MaxPlayers;
-                // _gameState.InfoMessage = $"Maximum player count is {MaxPlayers}.";
             }
 
             for (int i = 1; i <= playersToAdd; i++)
@@ -207,8 +221,6 @@ namespace TwentyOne.Services
                 _gameState.Players.Add(new Player($"Player {i}", startingBankroll));
             }
 
-            string pluralizePlayers = (_gameState.Players.Count > 1) ? "s" : "";
-            // _gameState.StatusMessage = $"New game created with {playersToAdd} player{pluralizePlayers}.";
             _gameState.CurrentGamePhase = GamePhase.Betting;
             return _gameState;
         }
@@ -241,6 +253,8 @@ namespace TwentyOne.Services
         public List<PlayerHandActions> AvailablePlayerActions()
         {
             List<PlayerHandActions> actions = [];
+
+            if(_currentPlayer.CurrentAction != PlayerHandActions.None) return actions;
 
             switch (_gameState.CurrentGamePhase)
             {
@@ -280,7 +294,7 @@ namespace TwentyOne.Services
             switch (_gameState.CurrentGamePhase)
             {
                 case GamePhase.Betting:
-                    // Game phase advances after last player finishes actions
+                    if(AvailablePlayerActions().Count == 0) AdvanceHandOrPlayer();
                     break;
                 case GamePhase.Dealing:
                     break;
@@ -296,24 +310,27 @@ namespace TwentyOne.Services
 
         public void HandlePlayerAction(PlayerHandActions action)
         {
-            if (_gameState.AvailableActions.Contains(action)) return;
-            switch (action)
+            if (AvailablePlayerActions().Contains(action) && _currentPlayer.CurrentAction == PlayerHandActions.None)
             {
-                case PlayerHandActions.Bet:
-                    PlayerBet();
-                    break;
-                case PlayerHandActions.Hit:
-                    PlayerHit();
-                    break;
-                case PlayerHandActions.Stand:
-                    PlayerStand();
-                    break;
-                case PlayerHandActions.DoubleDown:
-                    PlayerDoubleDown();
-                    break;
-                case PlayerHandActions.Split:
-                    PlayerSplit();
-                    break;
+                _currentPlayer.CurrentAction = action;
+                switch (action)
+                {
+                    case PlayerHandActions.Bet:
+                        PlayerBet();
+                        break;
+                    case PlayerHandActions.Hit:
+                        PlayerHit();
+                        break;
+                    case PlayerHandActions.Stand:
+                        PlayerStand();
+                        break;
+                    case PlayerHandActions.DoubleDown:
+                        PlayerDoubleDown();
+                        break;
+                    case PlayerHandActions.Split:
+                        PlayerSplit();
+                        break;
+                }
             }
         }
 
