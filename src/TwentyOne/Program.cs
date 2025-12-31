@@ -8,6 +8,7 @@ namespace TwentyOne
         static void Main(string[] args)
         {
             bool running = true;
+            bool updateConsole = true;
 
             // Key bindings for game actions
             Dictionary<ConsoleKey, PlayerGameActions> GameActionKeys = new()
@@ -35,8 +36,13 @@ namespace TwentyOne
             while (running)
             {
                 // gameDisplay.RenderGame();
-                Console.Clear();
-                Console.WriteLine(gameService.GameStateInfo);
+                if (updateConsole)
+                {
+                    Console.Clear();
+                    Console.WriteLine(gameService.GameStateInfo);
+                    updateConsole = false;
+                }
+
                 ConsoleKeyInfo playerInput = Console.ReadKey(true);
 
                 if (GameActionKeys.TryGetValue(playerInput.Key, out PlayerGameActions gameAction))
@@ -51,6 +57,7 @@ namespace TwentyOne
                             break;
                         case PlayerGameActions.Continue:
                             gameService.ContinueGame();
+                            updateConsole = true;
                             break;
                         default:
                             break;
@@ -60,8 +67,10 @@ namespace TwentyOne
                 else if (PlayerActionKeys.TryGetValue(playerInput.Key, out PlayerHandActions playerHandAction))
                 {
                     gameService.HandlePlayerAction(playerHandAction);
+                    updateConsole = true;
                 }
             }
+            Console.Clear();
         }
     }
 }
