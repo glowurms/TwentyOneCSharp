@@ -1,3 +1,4 @@
+using TwentyOne.Constants;
 using TwentyOne.Models;
 
 namespace TwentyOne.Services
@@ -39,71 +40,6 @@ namespace TwentyOne.Services
     */
     public class GameService
     {
-        public static readonly Dictionary<Rank, int> RankValues = new()
-        {
-            { Rank.Ace, 11 },
-            { Rank.Two, 2 },
-            { Rank.Three, 3 },
-            { Rank.Four, 4 },
-            { Rank.Five, 5 },
-            { Rank.Six, 6 },
-            { Rank.Seven, 7 },
-            { Rank.Eight, 8 },
-            { Rank.Nine, 9 },
-            { Rank.Ten, 10 },
-            { Rank.Jack, 10 },
-            { Rank.Queen, 10 },
-            { Rank.King, 10 }
-        };        
-        
-        public static readonly Dictionary<Rank, string> RankShort = new()
-        {
-            { Rank.Ace, "A" },
-            { Rank.Two, "2" },
-            { Rank.Three, "3" },
-            { Rank.Four, "4" },
-            { Rank.Five, "5" },
-            { Rank.Six, "6" },
-            { Rank.Seven, "7" },
-            { Rank.Eight, "8" },
-            { Rank.Nine, "9" },
-            { Rank.Ten, "10" },
-            { Rank.Jack, "J" },
-            { Rank.Queen, "Q" },
-            { Rank.King, "K" }
-        };
-
-        public static readonly Dictionary<Suit, string> SuitSymbol = new()
-        {
-            { Suit.Clubs, "♣" },
-            { Suit.Diamonds, "♦" },
-            { Suit.Hearts, "♥" },
-            { Suit.Spades, "♠" }
-        };
-
-        public static readonly Dictionary<PlayerHandActions, string> ActionDescriptions = new()
-        {
-            { PlayerHandActions.Bet, "Place a bet" },
-            { PlayerHandActions.Hit, "Take another card" },
-            { PlayerHandActions.Stand, "Keep your current hand" },
-            { PlayerHandActions.DoubleDown, "Double your bet and take one more card" },
-            { PlayerHandActions.Split, "Split your hand into two hands" }
-        };
-
-        public static readonly Dictionary<PlayerHandActions, string> ActionTakenText = new()
-        {
-            { PlayerHandActions.Bet, "places a bet" },
-            { PlayerHandActions.Hit, "hits and gets another card" },
-            { PlayerHandActions.Stand, "stays" },
-            { PlayerHandActions.DoubleDown, "doubles down and gets one more card" },
-            { PlayerHandActions.Split, "splits" },
-            { PlayerHandActions.None, "has no action to take" }
-        };
-
-        public static readonly int MinPlayers = 1;
-        public static readonly int MaxPlayers = 6;
-        public static readonly decimal BetAmount = 2m;
-
         public GameState GameState { get { return _gameState; } }
 
         private GameState _gameState;
@@ -138,7 +74,7 @@ namespace TwentyOne.Services
             {
                 if(_currentPlayer.CurrentAction != PlayerHandActions.None)
                 {
-                    return $"{_currentPlayer.Name} {ActionTakenText[_currentPlayer.CurrentAction]}.";
+                    return $"{_currentPlayer.Name} {ActionConstants.ActionTakenText[_currentPlayer.CurrentAction]}.";
                 }
 
                 if (_gameState.CurrentGamePhase == GamePhase.Betting)
@@ -196,7 +132,22 @@ namespace TwentyOne.Services
             }
         }
 
-        public GameState StartNewGame(int playerCount = 1, decimal startingBankroll = 500m, int shoeDeckCount = 6)
+        public GameState StartNewGame()
+        {
+            return StartNewGame(GameConstants.MinPlayers, GameConstants.DefaultStartingBankroll, GameConstants.DefaultShoeDeckCount);
+        }
+
+        public GameState StartNewGame(int playerCount)
+        {
+            return StartNewGame(playerCount, GameConstants.DefaultStartingBankroll, GameConstants.DefaultShoeDeckCount);
+        }
+
+        public GameState StartNewGame(int playerCount, decimal startingBankroll)
+        {
+            return StartNewGame(playerCount, startingBankroll, GameConstants.DefaultShoeDeckCount);
+        }
+
+        public GameState StartNewGame(int playerCount, decimal startingBankroll, int shoeDeckCount)
         {
             _gameState = new()
             {
@@ -207,13 +158,13 @@ namespace TwentyOne.Services
 
             int playersToAdd = playerCount;
             // Validate Player Count
-            if (playerCount < MinPlayers)
+            if (playerCount < GameConstants.MinPlayers)
             {
-                playersToAdd = MinPlayers;
+                playersToAdd = GameConstants.MinPlayers;
             }
-            else if (playerCount > MaxPlayers)
+            else if (playerCount > GameConstants.MaxPlayers)
             {
-                playersToAdd = MaxPlayers;
+                playersToAdd = GameConstants.MaxPlayers;
             }
 
             for (int i = 1; i <= playersToAdd; i++)
@@ -342,7 +293,7 @@ namespace TwentyOne.Services
             {
                 if (card.Rank != Rank.Ace)
                 {
-                    value += RankValues[card.Rank];
+                    value += CardConstants.RankValues[card.Rank];
                 }
             }
             value += aceCount; // Count all aces as 1 initially
@@ -360,7 +311,7 @@ namespace TwentyOne.Services
 
         public static bool HandIsNatural(Hand hand) { return (hand.TotalCardCount == 2 && HandValue(hand) == 21); }
 
-        private static bool DealerShouldDraw(Hand hand) { return HandValue(hand) < 17; }
+        private static bool DealerShouldDraw(Hand hand) { return HandValue(hand) < GameConstants.DealerStandThreshold; }
 
         private static bool CanSplitHand(Hand hand) { return (hand.CardsInHand[0].Rank == hand.CardsInHand[1].Rank); }
 
@@ -412,7 +363,7 @@ namespace TwentyOne.Services
 
         private void PlayerBet()
         {
-            decimal bet = Math.Min(_currentPlayer.Bankroll, BetAmount);
+            decimal bet = Math.Min(_currentPlayer.Bankroll, GameConstants.DefaultBetAmount);
             _currentPlayer.Bankroll -= bet;
             _currentPlayer.Bet += bet;
             AdvanceHandOrPlayer();
