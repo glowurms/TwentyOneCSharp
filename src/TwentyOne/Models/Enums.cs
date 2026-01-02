@@ -19,17 +19,17 @@ namespace TwentyOne.Models
         RoundEnd
     }
 
-    public enum PlayerHandActions
+    public enum DealerActions
+    {
+       ShowFaceDown, Draw, Stand, None
+    }
+
+    public enum PlayerActions
     {
        Bet, Stand, Hit, DoubleDown, Split, None
     }
 
-    public enum PlayerStatus
-    {
-        Active, Busted, Standing, Blackjack, Bankrupt
-    }
-
-    public enum PlayerGameActions
+    public enum GameActions
     {
         Continue, Cancel, Instructions, Quit
     }
