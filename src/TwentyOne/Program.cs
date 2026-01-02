@@ -11,22 +11,22 @@ namespace TwentyOne
             bool updateConsole = true;
 
             // Key bindings for game actions
-            Dictionary<ConsoleKey, PlayerGameActions> GameActionKeys = new()
+            Dictionary<ConsoleKey, GameActions> GameActionKeys = new()
             {
-                { ConsoleKey.Spacebar, PlayerGameActions.Continue },
-                { ConsoleKey.Escape, PlayerGameActions.Cancel },
-                { ConsoleKey.I, PlayerGameActions.Instructions },
-                { ConsoleKey.Q, PlayerGameActions.Quit }
+                { ConsoleKey.Spacebar, GameActions.Continue },
+                { ConsoleKey.Escape, GameActions.Cancel },
+                { ConsoleKey.I, GameActions.Instructions },
+                { ConsoleKey.Q, GameActions.Quit }
             };
 
             // Key bindings for player actions
-            Dictionary<ConsoleKey, PlayerHandActions> PlayerActionKeys = new()
+            Dictionary<ConsoleKey, PlayerActions> PlayerActionKeys = new()
             {
-                { ConsoleKey.B, PlayerHandActions.Bet },
-                { ConsoleKey.F, PlayerHandActions.Hit },
-                { ConsoleKey.S, PlayerHandActions.Stand },
-                { ConsoleKey.D, PlayerHandActions.DoubleDown },
-                { ConsoleKey.A, PlayerHandActions.Split }
+                { ConsoleKey.B, PlayerActions.Bet },
+                { ConsoleKey.F, PlayerActions.Hit },
+                { ConsoleKey.S, PlayerActions.Stand },
+                { ConsoleKey.D, PlayerActions.DoubleDown },
+                { ConsoleKey.A, PlayerActions.Split }
             };
 
             GameService gameService = new();
@@ -39,23 +39,23 @@ namespace TwentyOne
                 if (updateConsole)
                 {
                     Console.Clear();
-                    Console.WriteLine(gameService.GameStateInfo);
+                    Console.WriteLine(TextService.GameStateSummary(gameService.GameState));
                     updateConsole = false;
                 }
 
                 ConsoleKeyInfo playerInput = Console.ReadKey(true);
 
-                if (GameActionKeys.TryGetValue(playerInput.Key, out PlayerGameActions gameAction))
+                if (GameActionKeys.TryGetValue(playerInput.Key, out GameActions gameAction))
                 {
                     switch (gameAction)
                     {
-                        case PlayerGameActions.Cancel:
+                        case GameActions.Cancel:
                             running = false;
                             break;
-                        case PlayerGameActions.Quit:
+                        case GameActions.Quit:
                             running = false;
                             break;
-                        case PlayerGameActions.Continue:
+                        case GameActions.Continue:
                             gameService.ContinueGame();
                             updateConsole = true;
                             break;
@@ -64,9 +64,9 @@ namespace TwentyOne
                     }
                     // GameDisplayService.ClearGame();
                 }
-                else if (PlayerActionKeys.TryGetValue(playerInput.Key, out PlayerHandActions playerHandAction))
+                else if (PlayerActionKeys.TryGetValue(playerInput.Key, out PlayerActions playerHandAction))
                 {
-                    gameService.HandlePlayerAction(playerHandAction);
+                    gameService.SelectPlayerAction(playerHandAction);
                     updateConsole = true;
                 }
             }
