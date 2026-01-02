@@ -7,7 +7,7 @@ namespace TwentyOne.Models
         public List<Hand> HandsInPlay { get; set; } = [];
         public decimal Bet { get; set; } = 0m;
         public bool SittingOut { get; set; } = false;
-        public PlayerHandActions CurrentAction { get; set; } = PlayerHandActions.None;
+        public PlayerActions SelectedAction { get; set; } = PlayerActions.None;
 
         public string PlayerInfo()
         {
