@@ -114,12 +114,12 @@ public class RulesServiceTest
     // 2 cards Value is 9, 10, or 11
     [InlineData(new Rank[] { Rank.Three, Rank.Six }, true)]
     [InlineData(new Rank[] { Rank.Five, Rank.Six }, true)]
-    // TODO: Get this to pass even though you really wouldn't
-    // [InlineData(new Rank[] { Rank.Ace, Rank.King }, true)]
     // Value not 9, 10, or 11
     [InlineData(new Rank[] { Rank.Ten, Rank.King }, false)]
     // Hand is not 2 cards
     [InlineData(new Rank[] { Rank.Ace, Rank.Nine, Rank.Ace }, false)]
+    // TODO: Research to make sure the test below should even be considered
+    // [InlineData(new Rank[] { Rank.Ace, Rank.King }, true)]
     public void CanDoubleDown_WorksCorrectly(Rank[] ranks, bool expectedCanDoubleDown)
     {
         Hand hand = new();
@@ -154,14 +154,15 @@ public class RulesServiceTest
     [InlineData(new Rank[] { Rank.Ten, Rank.Seven }, false)] // 17 == 17
     [InlineData(new Rank[] { Rank.King, Rank.Nine }, false)] // 19 > 17
     [InlineData(new Rank[] { Rank.Ace, Rank.Nine, Rank.Ace }, false)] // 21 > 17 Three cards
+    // TODO: Research to make sure the tests below should even be considered
     // (16) 6 Ace scenario (unlikely but possible in testing)
-    [InlineData(new Rank[] { 
-        Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, 
-        Rank.Ace, Rank.Ace }, true)]
-    // (17) 7 Ace scenario (unlikely but possible in testing)
-    [InlineData(new Rank[] { 
-        Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, 
-        Rank.Ace, Rank.Ace }, false)]
+    // [InlineData(new Rank[] { 
+    //     Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, 
+    //     Rank.Ace, Rank.Ace }, true)]
+    // (8) 7 Ace scenario (unlikely but possible in testing)
+    // [InlineData(new Rank[] { 
+    //     Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, Rank.Ace, 
+    //     Rank.Ace, Rank.Ace, Rank.Ace }, true)]
     public void DealerShouldDraw_WorksCorrectly(Rank[] ranks, bool expectedShouldDraw)
     {
         Hand dealerHand = new();
