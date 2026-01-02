@@ -44,15 +44,14 @@ namespace TwentyOne.Services
             }
             Columns playerColumns = new(playerTables);
 
-            Text infoText = new Text(_gameService.GameStateInfo, new Style(Color.Grey)).LeftJustified();
+            // Text infoText = new Text(_gameService.GameStateInfo, new Style(Color.Grey)).LeftJustified();
 
             Rows rowsToDisplay = new(
                 _headerText,
                 dealerShoeInstructionsTable,
                 new Text("Available actions will go here...", new Style(Color.Green)).LeftJustified(),
                 playerColumns,
-                StatusMessageText(),
-                infoText);
+                StatusMessageText());
 
             AnsiConsole.Write(rowsToDisplay);
         }
@@ -83,7 +82,8 @@ namespace TwentyOne.Services
 
         private Text StatusMessageText()
         {
-            return new Text(_gameService.StatusMessage, new Style(Color.Yellow)).LeftJustified();
+            // return new Text(_gameService.GamePhaseText, new Style(Color.Yellow)).LeftJustified();
+            return new Text("");
         }
 
         private static Rows KeymapInfo()
@@ -118,7 +118,7 @@ namespace TwentyOne.Services
             handPanel.Border = BoxBorder.Rounded;
             handPanel.BorderColor(Color.Silver);
             handPanel.Padding = new Padding(2, 2, 2, 2);
-            handPanel.Header = new PanelHeader($" Hand [[ Value {GameService.HandValue(hand)} ]] ");
+            // handPanel.Header = new PanelHeader($" Hand [[ Value {GameService.HandValue(hand)} ]] ");
             return handPanel;
         }
 
