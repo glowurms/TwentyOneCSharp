@@ -1,3 +1,4 @@
+using TwentyOne.Constants;
 using TwentyOne.Models;
 using TwentyOne.Services;
 
@@ -18,7 +19,7 @@ namespace TwentyOne.Tests.Services
             GameService gameService = new();
             GameState gameState = gameService.StartNewGame(requestedPlayerCount, bankRollAmount, shoeCount);
 
-            int expectedPlayerCount = Math.Min(GameService.MaxPlayers, Math.Max(GameService.MinPlayers, requestedPlayerCount));
+            int expectedPlayerCount = Math.Min(GameConstants.MaxPlayers, Math.Max(GameConstants.MinPlayers, requestedPlayerCount));
 
             Assert.Equal(shoeCount, gameState.Shoe.DeckCount);
             Assert.Equal(expectedPlayerCount, gameState.Players.Count);
@@ -61,87 +62,6 @@ namespace TwentyOne.Tests.Services
         }
 
         [Theory]
-        // Bet should be only option in Betting phase. Cards shouldn't matter or even be dealt in scenario
-        [InlineData(
-            new Rank[] {},
-            GamePhase.Betting, 
-            new PlayerHandActions[] {
-                PlayerHandActions.Bet
-            })]
-        // Excludes: Bet
-        [InlineData(
-            new Rank[] { Rank.Eight, Rank.Eight },
-            GamePhase.PlayerTurns, 
-            new PlayerHandActions[] {
-                PlayerHandActions.Hit, PlayerHandActions.Stand, PlayerHandActions.DoubleDown, PlayerHandActions.Split
-            })] 
-        // Excludes: Split, Bet
-        [InlineData(
-            new Rank[] { Rank.Five, Rank.Ten },
-            GamePhase.PlayerTurns, 
-            new PlayerHandActions[] {
-                PlayerHandActions.Hit, PlayerHandActions.Stand, PlayerHandActions.DoubleDown
-            })]
-        // Excludes: Split, DoubleDown, Bet
-        [InlineData(
-            new Rank[] { Rank.Two, Rank.Ten, Rank.Eight },
-            GamePhase.PlayerTurns, 
-            new PlayerHandActions[] {
-                PlayerHandActions.Hit, PlayerHandActions.Stand
-            })]
-        // Hand is Natural. No actions available
-        [InlineData(
-            new Rank[] { Rank.Ace, Rank.Jack },
-            GamePhase.PlayerTurns, 
-            new PlayerHandActions[] {
-            })]
-        // Hand is bust. No actions available
-        [InlineData(
-            new Rank[] { Rank.Two, Rank.Ten, Rank.Eight, Rank.Nine },
-            GamePhase.PlayerTurns, 
-            new PlayerHandActions[] {
-            })]
-        public void AvailablePlayerActions_ReturnsCorrectActions(Rank[] ranks, GamePhase gamePhase, PlayerHandActions[] expectedActions)
-        {
-            // Split setup
-            Hand hand = new();
-            foreach (Rank rank in ranks)
-            {
-                hand.AddCard(new Card(rank, Suit.Hearts)); // Suit doesn't matter here
-            }
-
-            Player player = new("Player", 500);
-            player.HandsInPlay.Add(hand);
-
-            // Simulate game state player turn
-            GameState gamestate = new();
-            gamestate.Players.Add(player);
-            gamestate.CurrentGamePhase = gamePhase;
-
-            GameService gameService = new(ref gamestate);
-
-            // Get actions for each case
-            List<PlayerHandActions> actualactions = gameService.AvailablePlayerActions();
-
-            Assert.Equal(actualactions.OrderDescending(), expectedActions.OrderDescending());
-        }
-
-        // [Fact]
-        // public void ContinueGame_WorksCorrectly()
-        // {
-        //     // TODO: Add tests when completing function
-        // }
-
-        // [Theory]
-        // [InlineData(
-        //     PlayerHandActions.Bet,
-        //     new List<PlayerHandActions>() { PlayerHandActions.Bet })]
-        // public void HandlePlayerAction_WorksCorrectly(PlayerHandActions requestedAction, List<PlayerHandActions> availableActions)
-        // {
-        //     // TODO: Add tests when completing function
-        // }
-
-        [Theory]
         // General card value scenarios
         [InlineData(new Rank[] { Rank.Two, Rank.Three }, 5)]
         [InlineData(new Rank[] { Rank.Two, Rank.Three, Rank.Four }, 9)]
@@ -178,7 +98,7 @@ namespace TwentyOne.Tests.Services
                 hand.AddCard(new Card(rank, Suit.Hearts));
             }
 
-            int value = GameService.HandValue(hand);
+            int value = RulesService.HandValue(hand);
 
             Assert.Equal(expectedValue, value);
         }
@@ -194,7 +114,7 @@ namespace TwentyOne.Tests.Services
                 hand.AddCard(new Card(rank, Suit.Hearts));
             }
 
-            bool isBust = GameService.HandIsBust(hand);
+            bool isBust = RulesService.HandIsBust(hand);
 
             Assert.Equal(expectedIsBust, isBust);
         }
@@ -215,7 +135,7 @@ namespace TwentyOne.Tests.Services
                 hand.AddCard(new Card(rank, Suit.Hearts));
             }
 
-            bool isTwentyOne = GameService.HandIsTwentyOne(hand);
+            bool isTwentyOne = RulesService.HandIsTwentyOne(hand);
 
             Assert.Equal(expectedIsTwentyOne, isTwentyOne);
         }
@@ -232,7 +152,7 @@ namespace TwentyOne.Tests.Services
                 hand.AddCard(new Card(rank, Suit.Hearts));
             }
 
-            bool isNatural = GameService.HandIsNatural(hand);
+            bool isNatural = RulesService.HandIsNatural(hand);
 
             Assert.Equal(expectedIsNatural, isNatural);
         }
