@@ -44,13 +44,13 @@ public static class TextService
     public static string PlayerActionSummary(GameState gameState)
     {
         Player currentPlayer = gameState.Players[gameState.CurrentPlayerIndex];
-        if (currentPlayer.SelectedAction == PlayerActions.None)
+        if (gameState.CurrentPlayerIntent == PlayerActions.None)
         {
             return $"{currentPlayer.Name}'s turn to {string.Join(", ", gameState.CurrentPlayerOptions)}";
         }
         else
         {
-            return $"{currentPlayer.Name} {PlayerActionTakenText[currentPlayer.SelectedAction]}";
+            return $"{currentPlayer.Name} {PlayerActionTakenText[gameState.CurrentPlayerIntent]}";
         }
     }
 

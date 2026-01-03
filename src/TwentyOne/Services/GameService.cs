@@ -201,9 +201,9 @@ namespace TwentyOne.Services
 
         public bool SelectPlayerAction(PlayerActions playerAction)
         {
-            if (_currentPlayer.SelectedAction == PlayerActions.None && _gameState.CurrentPlayerOptions.Contains(playerAction))
+            if (_gameState.CurrentPlayerIntent == PlayerActions.None && _gameState.CurrentPlayerOptions.Contains(playerAction))
             {
-                _currentPlayer.SelectedAction = playerAction;
+                _gameState.CurrentPlayerIntent = playerAction;
                 return true;
             }
             return false;
@@ -211,7 +211,7 @@ namespace TwentyOne.Services
 
         private void HandlePlayerAction()
         {
-            switch (_currentPlayer.SelectedAction)
+            switch (_gameState.CurrentPlayerIntent)
             {
                 case PlayerActions.Bet:
                     PlayerBet();
@@ -237,8 +237,7 @@ namespace TwentyOne.Services
                 default:
                     break;
             }
-            _currentPlayer.SelectedAction = PlayerActions.None;
-
+            _gameState.CurrentPlayerIntent = PlayerActions.None;
         }
 
         private void DetermineDealerAction()

@@ -9,6 +9,7 @@ namespace TwentyOne.Models
         public GamePhase CurrentGamePhase { get; set; } = GamePhase.Betting;
         public int CurrentPlayerIndex { get; set; } = 0;
         public int CurrentHandIndex { get; set; } = 0;
+        public PlayerActions CurrentPlayerIntent { get; set; } = PlayerActions.None;
         public List<PlayerActions> CurrentPlayerOptions { get; set; } = [PlayerActions.None];
     }
 }
