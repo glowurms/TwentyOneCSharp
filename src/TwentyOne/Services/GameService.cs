@@ -45,6 +45,7 @@ namespace TwentyOne.Services
         private GameState _gameState;
         private Player _currentPlayer { get { return _gameState.Players[_gameState.CurrentPlayerIndex]; } }
         private Hand _currentHand { get { return _currentPlayer.HandsInPlay[_gameState.CurrentHandIndex]; } }
+        private Hand _dealerHand { get { return _gameState.DealerHand; } }
 
         public GameService()
         {
@@ -81,6 +82,8 @@ namespace TwentyOne.Services
                 Players = [],
             };
 
+            _gameState.Shoe.TendShoe();
+
             int playersToAdd = playerCount;
             // Validate Player Count
             if (playerCount < GameConstants.MinPlayers)
@@ -97,40 +100,91 @@ namespace TwentyOne.Services
                 _gameState.Players.Add(new Player($"Player {i}", startingBankroll));
             }
 
-            _gameState.CurrentGamePhase = GamePhase.Betting;
+            ResetHands();
             UpdateCurrentPlayerOptions();
+            _gameState.CurrentGamePhase = GamePhase.Betting;
             return _gameState;
         }
 
-        public void DealInitialCards()
+        // Advance the game
+        public void ContinueGame()
         {
-            if (_gameState.Shoe.CutCardReached || _gameState.Shoe.ShoeIsNotShuffled)
+            switch (_gameState.CurrentGamePhase)
             {
-                _gameState.Shoe.Shuffle();
+                case GamePhase.Betting:
+                    HandlePlayerAction();
+                    UpdateCurrentPlayerOptions();
+                    break;
+                case GamePhase.Dealing:
+                    if (!DealInitialCards())
+                    {
+                        AdvanceGamePhase();
+                    }
+                    break;
+                case GamePhase.PlayerTurns:
+                    HandlePlayerAction();
+                    UpdateCurrentPlayerOptions();
+                    break;
+                case GamePhase.DealerTurn:
+                    HandleDealerAction();
+                    break;
+                case GamePhase.RoundEnd:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public bool SelectPlayerAction(PlayerActions playerAction)
+        {
+            if (_gameState.CurrentPlayerIntent == PlayerActions.None && _gameState.CurrentPlayerOptions.Contains(playerAction))
+            {
+                _gameState.CurrentPlayerIntent = playerAction;
+                return true;
+            }
+            return false;
+        }
+
+        private void HandlePlayerAction()
+        {
+            bool shouldMoveToNextHand = false;
+            switch (_gameState.CurrentPlayerIntent)
+            {
+                case PlayerActions.Bet:
+                    PlayerBet();
+                    shouldMoveToNextHand = true;
+                    break;
+                case PlayerActions.Hit:
+                    PlayerHit();
+                    if (RulesService.HandIsBust(_currentHand))
+                    {
+                        shouldMoveToNextHand = true;
+                    }
+                    break;
+                case PlayerActions.Stand:
+                    shouldMoveToNextHand = true;
+                    break;
+                case PlayerActions.DoubleDown:
+                    PlayerDoubleDown();
+                    shouldMoveToNextHand = true;
+                    break;
+                case PlayerActions.Split:
+                    PlayerSplit();
+                    break;
+                default:
+                    break;
             }
 
-            // Setup hands and deal first card
-            foreach (Player player in _gameState.Players)
+            _gameState.CurrentPlayerIntent = PlayerActions.None;
+
+            if (shouldMoveToNextHand)
             {
-                player.HandsInPlay.Clear();
-                player.HandsInPlay.Add(new Hand());
-                player.HandsInPlay[0].AddCard(DealCard());
+                if (!MoveToNextHand())
+                {
+                    ResetCurrentPlayerAndHandIndex();
+                    AdvanceGamePhase();
+                }
             }
-            _gameState.DealerHand = new Hand();
-            _gameState.DealerHand.AddCard(DealCard());
-
-            // Deal second card
-            foreach (Player player in _gameState.Players)
-            {
-                player.HandsInPlay[0].AddCard(DealCard());
-            }
-
-            // Second dealer card is face down
-            Card secondDealerCard = DealCard();
-            secondDealerCard.FaceUp = false;
-            _gameState.DealerHand.AddCard(secondDealerCard);
-
-            AdvanceGamePhase();
         }
 
         private void UpdateCurrentPlayerOptions()
@@ -172,81 +226,14 @@ namespace TwentyOne.Services
             }
         }
 
-        // Advance the game
-        public void ContinueGame()
+        private void HandleDealerAction()
         {
-            switch (_gameState.CurrentGamePhase)
-            {
-                case GamePhase.Betting:
-                    UpdateCurrentPlayerOptions();
-                    HandlePlayerAction();
-                    break;
-                case GamePhase.Dealing:
-                    DealInitialCards();
-                    break;
-                case GamePhase.PlayerTurns:
-                    UpdateCurrentPlayerOptions();
-                    HandlePlayerAction();
-                    break;
-                case GamePhase.DealerTurn:
-                    HandleDealerAction();
-                    DetermineDealerAction();
-                    break;
-                case GamePhase.RoundEnd:
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        public bool SelectPlayerAction(PlayerActions playerAction)
-        {
-            if (_gameState.CurrentPlayerIntent == PlayerActions.None && _gameState.CurrentPlayerOptions.Contains(playerAction))
-            {
-                _gameState.CurrentPlayerIntent = playerAction;
-                return true;
-            }
-            return false;
-        }
-
-        private void HandlePlayerAction()
-        {
-            switch (_gameState.CurrentPlayerIntent)
-            {
-                case PlayerActions.Bet:
-                    PlayerBet();
-                    AdvanceHandOrPlayer();
-                    break;
-                case PlayerActions.Hit:
-                    PlayerHit();
-                    if (RulesService.HandIsBust(_currentHand))
-                    {
-                        AdvanceHandOrPlayer();
-                    }
-                    break;
-                case PlayerActions.Stand:
-                    AdvanceHandOrPlayer();
-                    break;
-                case PlayerActions.DoubleDown:
-                    PlayerDoubleDown();
-                    AdvanceHandOrPlayer();
-                    break;
-                case PlayerActions.Split:
-                    PlayerSplit();
-                    break;
-                default:
-                    break;
-            }
-            _gameState.CurrentPlayerIntent = PlayerActions.None;
-        }
-
-        private void DetermineDealerAction()
-        {
-            if (_gameState.DealerHand.CardsInHand[1].FaceUp == false)
+            // Determine Dealer action
+            if (_dealerHand.CardsInHand[1].FaceUp == false)
             {
                 _gameState.DealerAction = DealerActions.ShowFaceDown;
             }
-            else if (RulesService.DealerShouldDraw(_gameState.DealerHand))
+            else if (RulesService.DealerShouldDraw(_dealerHand))
             {
                 _gameState.DealerAction = DealerActions.Draw;
             }
@@ -254,35 +241,34 @@ namespace TwentyOne.Services
             {
                 _gameState.DealerAction = DealerActions.Stand;
             }
-        }
 
-        private void HandleDealerAction()
-        {
+            // Dealer takes action
             switch (_gameState.DealerAction)
             {
                 case DealerActions.ShowFaceDown:
                     _gameState.DealerHand.CardsInHand[1].FaceUp = true;
-                    _gameState.DealerAction = DealerActions.None;
                     break;
                 case DealerActions.Draw:
-                    _gameState.DealerHand.AddCard(DealCard());
-                    _gameState.DealerAction = DealerActions.None;
+                    DealCardToDealer();
                     break;
                 case DealerActions.Stand:
-                    _gameState.DealerAction = DealerActions.None;
-                    AdvanceGamePhase();
+                    AdvanceGamePhase(); // Dealer turn ends
                     break;
                 default:
                     break;
             }
+
+            _gameState.DealerAction = DealerActions.None;
         }
 
         private void AdvanceGamePhase()
         {
+            // TODO: Refactor to handle Naturals flow and evaluation
             switch (_gameState.CurrentGamePhase)
             {
                 case GamePhase.Betting:
                     _gameState.CurrentGamePhase = GamePhase.Dealing;
+                    ResetHands();
                     break;
                 case GamePhase.Dealing:
                     _gameState.CurrentGamePhase = GamePhase.PlayerTurns;
@@ -290,13 +276,13 @@ namespace TwentyOne.Services
                     break;
                 case GamePhase.PlayerTurns:
                     _gameState.CurrentGamePhase = GamePhase.DealerTurn;
-                    DetermineDealerAction();
                     break;
                 case GamePhase.DealerTurn:
                     _gameState.CurrentGamePhase = GamePhase.RoundEnd;
                     break;
                 case GamePhase.RoundEnd:
                     _gameState.CurrentGamePhase = GamePhase.Betting;
+                    _gameState.Shoe.TendShoe();
                     UpdateCurrentPlayerOptions();
                     break;
                 default:
@@ -304,7 +290,7 @@ namespace TwentyOne.Services
             }
         }
 
-        private void AdvanceHandOrPlayer()
+        private bool MoveToNextHand()
         {
             int playerIndex = _gameState.CurrentPlayerIndex;
             int handIndex = _gameState.CurrentHandIndex;
@@ -322,11 +308,16 @@ namespace TwentyOne.Services
             }
             else
             {
-                // Last player reached. Reset index and advance game phase.
-                _gameState.CurrentPlayerIndex = 0;
-                _gameState.CurrentHandIndex = 0;
-                AdvanceGamePhase();
+                // Last player reached
+                return false;
             }
+            return true;
+        }
+
+        private void ResetCurrentPlayerAndHandIndex()
+        {
+            _gameState.CurrentPlayerIndex = 0;
+            _gameState.CurrentHandIndex = 0;
         }
 
         private void PlayerBet()
@@ -338,6 +329,7 @@ namespace TwentyOne.Services
 
         private void PlayerDoubleDown()
         {
+            // TODO: Refactor to couple double down with a specific hand, deal 1 card and ignore till round end
             decimal bet = _currentPlayer.Bet;
             _currentPlayer.Bankroll -= bet;
             _currentPlayer.Bet += bet;
@@ -345,7 +337,7 @@ namespace TwentyOne.Services
 
         private void PlayerHit()
         {
-            _currentHand.AddCard(DealCard());
+            DealCardToPlayer();
         }
 
         private void PlayerSplit()
@@ -359,10 +351,69 @@ namespace TwentyOne.Services
             _currentPlayer.HandsInPlay.Add(splitHandTwo);
         }
 
-        private Card DealCard()
+        private Card DrawCard()
         {
             Card? card = _gameState.Shoe.DealCard();
             return card ?? throw new Exception("Not enough cards in the shoe.");
+        }
+
+        private Card DealCardToPlayer()
+        {
+            Card card = DrawCard();
+            _currentHand.AddCard(DrawCard());
+            return card;
+        }
+
+        private Card DealCardToDealer(bool FaceUp = true)
+        {
+            Card card = DrawCard();
+            _gameState.DealerHand.AddCard(DrawCard());
+            return card;
+        }
+
+        private void ResetHands()
+        {
+            foreach (Player player in _gameState.Players)
+            {
+                player.HandsInPlay.Clear();
+                player.HandsInPlay.Add(new Hand());
+            }
+            _gameState.DealerHand = new Hand();
+        }
+
+        private bool DealInitialCards()
+        {
+            bool atFirstPlayerIndex = _gameState.CurrentPlayerIndex == 0;
+
+            // Draw Card for Dealer
+            if(atFirstPlayerIndex && _dealerHand.TotalCardCount < _currentHand.TotalCardCount)
+            {
+                bool faceUp = _dealerHand.TotalCardCount != 1;
+                DealCardToDealer(faceUp);
+                return true;
+            }
+            // Draw Card for Player
+            else if(_currentHand.TotalCardCount < 2)
+            {
+                DealCardToPlayer();
+                if (!MoveToNextHand())
+                {
+                    ResetCurrentPlayerAndHandIndex();
+                }
+                return true;
+            }
+
+            return false;
+
+
+
+            // // Second dealer card is face down
+            // Card secondDealerCard = DrawCard();
+            // secondDealerCard.FaceUp = false;
+            // _gameState.DealerHand.AddCard(secondDealerCard);
+
+            // return true;
+            // AdvanceGamePhase();
         }
     }
 }
