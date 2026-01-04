@@ -27,6 +27,14 @@ namespace TwentyOne.Models
             }
         }
 
+        public void TendShoe()
+        {
+            if (CutCardReached || ShoeIsNotShuffled)
+            {
+                Shuffle();
+            }
+        }
+
         public override void Shuffle()
         {
             base.Shuffle();
