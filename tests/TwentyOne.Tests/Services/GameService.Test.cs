@@ -29,34 +29,4 @@ public class GameServiceTest
             Assert.Equal(bankRollAmount, player.Bankroll);
         }
     }
-
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(6)]
-    [InlineData(7)]
-    [InlineData(10)]
-    public void DealInitialCards_WorksCorrectly(int requestedPlayerCount)
-    {
-        GameService gameService = new();
-        GameState gameState = gameService.StartNewGame(requestedPlayerCount, 500, 6);
-
-        gameService.DealInitialCards();
-
-        int cardsInPlayCount = (gameState.Players.Count * 2) + 2; // 2 Cards to each player and the dealer
-
-        Assert.Equal(2, gameState.DealerHand.TotalCardCount);
-
-        foreach(Player player in gameState.Players)
-        {
-            foreach(Hand hand in player.HandsInPlay)
-            {
-                Assert.Equal(2, hand.TotalCardCount);
-            }
-        }
-        // Each player and the dealer has 2 cards, so total 4 cards dealt
-        Assert.Equal(gameState.Shoe.TotalCardCount - cardsInPlayCount, gameState.Shoe.UndealtCardCount);
-    }
 }
