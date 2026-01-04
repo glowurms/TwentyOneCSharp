@@ -14,6 +14,7 @@ namespace TwentyOne.Models
     {
         Betting,
         Dealing,
+        Naturals,
         PlayerTurns,
         DealerTurn,
         RoundEnd

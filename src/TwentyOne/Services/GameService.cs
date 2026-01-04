@@ -100,9 +100,7 @@ namespace TwentyOne.Services
                 _gameState.Players.Add(new Player($"Player {i}", startingBankroll));
             }
 
-            ResetHands();
-            UpdateCurrentPlayerOptions();
-            _gameState.CurrentGamePhase = GamePhase.Betting;
+            GamePhaseBegin(GamePhase.Betting);
             return _gameState;
         }
 
@@ -116,10 +114,7 @@ namespace TwentyOne.Services
                     UpdateCurrentPlayerOptions();
                     break;
                 case GamePhase.Dealing:
-                    if (!DealInitialCards())
-                    {
-                        AdvanceGamePhase();
-                    }
+                    DealInitialCards();
                     break;
                 case GamePhase.PlayerTurns:
                     HandlePlayerAction();
@@ -263,27 +258,84 @@ namespace TwentyOne.Services
 
         private void AdvanceGamePhase()
         {
-            // TODO: Refactor to handle Naturals flow and evaluation
             switch (_gameState.CurrentGamePhase)
             {
                 case GamePhase.Betting:
-                    _gameState.CurrentGamePhase = GamePhase.Dealing;
-                    ResetHands();
+                    GamePhaseEnd(GamePhase.Betting);
+                    GamePhaseBegin(GamePhase.Dealing);
                     break;
                 case GamePhase.Dealing:
+                    GamePhaseEnd(GamePhase.Dealing);
+                    // TODO: Simulate or implement Naturals GamePhase Scenario
+                    GamePhaseBegin(GamePhase.PlayerTurns);
+                    break;
+                case GamePhase.Naturals:
+                    GamePhaseEnd(GamePhase.Naturals);
+                    GamePhaseBegin(GamePhase.RoundEnd);
+                    break;
+                case GamePhase.PlayerTurns:
+                    GamePhaseEnd(GamePhase.PlayerTurns);
+                    GamePhaseBegin(GamePhase.DealerTurn);
+                    break;
+                case GamePhase.DealerTurn:
+                    GamePhaseEnd(GamePhase.DealerTurn);
+                    GamePhaseBegin(GamePhase.RoundEnd);
+                    break;
+                case GamePhase.RoundEnd:
+                    GamePhaseEnd(GamePhase.RoundEnd);
+                    GamePhaseBegin(GamePhase.Betting);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private void GamePhaseBegin(GamePhase targetPhase)
+        {
+            switch (targetPhase)
+            {
+                case GamePhase.Betting:
+                    _gameState.CurrentGamePhase = GamePhase.Betting;
+                    UpdateCurrentPlayerOptions();
+                    break;
+                case GamePhase.Dealing:
+                    _gameState.CurrentGamePhase = GamePhase.Dealing;
+                    _gameState.Shoe.TendShoe();
+                    ResetHands();
+                    break;
+                case GamePhase.Naturals:
+                    _gameState.CurrentGamePhase = GamePhase.Naturals;
+                    // TODO: Simulate or implement Naturals GamePhaseBegin Scenario
+                    break;
+                case GamePhase.PlayerTurns:
                     _gameState.CurrentGamePhase = GamePhase.PlayerTurns;
                     UpdateCurrentPlayerOptions();
                     break;
-                case GamePhase.PlayerTurns:
+                case GamePhase.DealerTurn:
                     _gameState.CurrentGamePhase = GamePhase.DealerTurn;
                     break;
-                case GamePhase.DealerTurn:
+                case GamePhase.RoundEnd:
                     _gameState.CurrentGamePhase = GamePhase.RoundEnd;
                     break;
+                default:
+                    break;
+            }
+        }
+
+        private void GamePhaseEnd(GamePhase targetPhase)
+        {
+            switch (targetPhase)
+            {
+                case GamePhase.Betting:
+                    break;
+                case GamePhase.Dealing:
+                    break;
+                case GamePhase.PlayerTurns:
+                    break;
+                case GamePhase.DealerTurn:
+                    break;
                 case GamePhase.RoundEnd:
-                    _gameState.CurrentGamePhase = GamePhase.Betting;
-                    _gameState.Shoe.TendShoe();
-                    UpdateCurrentPlayerOptions();
+                    ResetHands();
                     break;
                 default:
                     break;
@@ -381,7 +433,7 @@ namespace TwentyOne.Services
             _gameState.DealerHand = new Hand();
         }
 
-        private bool DealInitialCards()
+        private void DealInitialCards()
         {
             bool atFirstPlayerIndex = _gameState.CurrentPlayerIndex == 0;
 
@@ -390,7 +442,6 @@ namespace TwentyOne.Services
             {
                 bool faceUp = _dealerHand.TotalCardCount != 1;
                 DealCardToDealer(faceUp);
-                return true;
             }
             // Draw Card for Player
             else if(_currentHand.TotalCardCount < 2)
@@ -400,20 +451,11 @@ namespace TwentyOne.Services
                 {
                     ResetCurrentPlayerAndHandIndex();
                 }
-                return true;
             }
-
-            return false;
-
-
-
-            // // Second dealer card is face down
-            // Card secondDealerCard = DrawCard();
-            // secondDealerCard.FaceUp = false;
-            // _gameState.DealerHand.AddCard(secondDealerCard);
-
-            // return true;
-            // AdvanceGamePhase();
+            else
+            {
+                AdvanceGamePhase();
+            }
         }
     }
 }
