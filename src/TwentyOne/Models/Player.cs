@@ -5,7 +5,6 @@ namespace TwentyOne.Models
         public string Name { get; set; } = name;
         public decimal Bankroll { get; set; } = startingBankroll;
         public List<Hand> HandsInPlay { get; set; } = [];
-        public decimal Bet { get; set; } = 0m;
         public bool SittingOut { get; set; } = false;
 
         public string PlayerInfo()
