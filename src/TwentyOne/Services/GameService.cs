@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 using TwentyOne.Constants;
 using TwentyOne.Models;
 
@@ -116,6 +118,9 @@ namespace TwentyOne.Services
                 case GamePhase.Dealing:
                     DealInitialCards();
                     break;
+                case GamePhase.Naturals:
+                    HandleNaturalsPhase();
+                    break;
                 case GamePhase.PlayerTurns:
                     HandlePlayerAction();
                     UpdateCurrentPlayerOptions();
@@ -124,6 +129,7 @@ namespace TwentyOne.Services
                     HandleDealerAction();
                     break;
                 case GamePhase.RoundEnd:
+                    HandleRoundEnd();
                     break;
                 default:
                     break;
@@ -266,8 +272,14 @@ namespace TwentyOne.Services
                     break;
                 case GamePhase.Dealing:
                     GamePhaseEnd(GamePhase.Dealing);
-                    // TODO: Simulate or implement Naturals GamePhase Scenario
-                    GamePhaseBegin(GamePhase.PlayerTurns);
+                    if (ShouldProceedToNaturalsPhase())
+                    {
+                        GamePhaseBegin(GamePhase.Naturals);
+                    }
+                    else
+                    {
+                        GamePhaseBegin(GamePhase.PlayerTurns);
+                    }
                     break;
                 case GamePhase.Naturals:
                     GamePhaseEnd(GamePhase.Naturals);
@@ -296,12 +308,12 @@ namespace TwentyOne.Services
             {
                 case GamePhase.Betting:
                     _gameState.CurrentGamePhase = GamePhase.Betting;
+                    ResetHands();
                     UpdateCurrentPlayerOptions();
                     break;
                 case GamePhase.Dealing:
                     _gameState.CurrentGamePhase = GamePhase.Dealing;
                     _gameState.Shoe.TendShoe();
-                    ResetHands();
                     break;
                 case GamePhase.Naturals:
                     _gameState.CurrentGamePhase = GamePhase.Naturals;
@@ -372,19 +384,32 @@ namespace TwentyOne.Services
             _gameState.CurrentHandIndex = 0;
         }
 
+        private bool ShouldProceedToNaturalsPhase()
+        {
+            foreach(Player player in _gameState.Players)
+            {
+                if (RulesService.HandIsNatural(player.HandsInPlay[0]))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         private void PlayerBet()
         {
-            decimal bet = Math.Min(_currentPlayer.Bankroll, GameConstants.DefaultBetAmount);
-            _currentPlayer.Bankroll -= bet;
-            _currentPlayer.Bet += bet;
+            decimal currentBetAmount = Math.Min(_currentPlayer.Bankroll, GameConstants.DefaultBetAmount);
+            _currentPlayer.Bankroll -= currentBetAmount;
+            (Player Player, Hand Hand, decimal Amount) handBet = (_currentPlayer, _currentHand, currentBetAmount);
+            _gameState.Bets.Add(handBet);
         }
 
         private void PlayerDoubleDown()
         {
-            // TODO: Refactor to couple double down with a specific hand, deal 1 card and ignore till round end
-            decimal bet = _currentPlayer.Bet;
-            _currentPlayer.Bankroll -= bet;
-            _currentPlayer.Bet += bet;
+            (Player Player, Hand Hand, decimal Amount) handBet = _gameState.Bets.Find(bet => bet.Player == _currentPlayer && bet.Hand == _currentHand);
+            decimal currentBetAmount = handBet.Amount;
+            _currentPlayer.Bankroll -= currentBetAmount;
+            handBet.Amount += currentBetAmount;
         }
 
         private void PlayerHit()
@@ -394,6 +419,7 @@ namespace TwentyOne.Services
 
         private void PlayerSplit()
         {
+            // TODO: Rework for multiple splits and adding bet for additional hand
             Hand splitHandOne = new();
             splitHandOne.AddCard(_currentHand.CardsInHand[0]);
             Hand splitHandTwo = new();
@@ -403,24 +429,31 @@ namespace TwentyOne.Services
             _currentPlayer.HandsInPlay.Add(splitHandTwo);
         }
 
-        private Card DrawCard()
+        private Card DrawCard(bool faceUp = true)
         {
-            Card? card = _gameState.Shoe.DealCard();
-            return card ?? throw new Exception("Not enough cards in the shoe.");
+            Card? card = _gameState.Shoe.DealCard() ?? throw new Exception("Not enough cards in the shoe.");
+            card.FaceUp = faceUp;
+            return card;
         }
 
-        private Card DealCardToPlayer()
+        private void DealCardToPlayer()
         {
-            Card card = DrawCard();
             _currentHand.AddCard(DrawCard());
-            return card;
         }
 
-        private Card DealCardToDealer(bool FaceUp = true)
+        private void DealCardFaceDownToPlayer()
         {
-            Card card = DrawCard();
+            _currentHand.AddCard(DrawCard(false));
+        }
+
+        private void DealCardToDealer()
+        {
             _gameState.DealerHand.AddCard(DrawCard());
-            return card;
+        }
+
+        private void DealCardFaceDownToDealer()
+        {
+            _gameState.DealerHand.AddCard(DrawCard(false));
         }
 
         private void ResetHands()
@@ -441,7 +474,7 @@ namespace TwentyOne.Services
             if(atFirstPlayerIndex && _dealerHand.TotalCardCount < _currentHand.TotalCardCount)
             {
                 bool faceUp = _dealerHand.TotalCardCount != 1;
-                DealCardToDealer(faceUp);
+                DealCardFaceDownToDealer();
             }
             // Draw Card for Player
             else if(_currentHand.TotalCardCount < 2)
@@ -456,6 +489,86 @@ namespace TwentyOne.Services
             {
                 AdvanceGamePhase();
             }
+        }
+
+        private void HandleNaturalsPhase()
+        {
+            // A Player has Ace and a 10 card
+
+            // Dealer face up card is 10 card or Ace
+                // Dealer checks face down and has 21
+                    // Collect bets from any players who do not
+                    // Return bets to players with 21
+                    // Proceed to End Round
+                // Dealer checks face down and doesn't have 21
+                    // Pay out 1.5 to players with 21
+                    // Proceed to player turns
+
+            // Dealer face up card not 10 card or Ace
+                // Pay out 1.5 to players with 21
+                // Proceed to player turns
+                
+
+            AdvanceGamePhase();
+        }
+
+        private void ResolveBet(int betIndex)
+        {
+            Player targetPlayer = _gameState.Bets[betIndex].Player;
+            Hand targetHand = _gameState.Bets[betIndex].Hand;
+            decimal targetBetAmount = _gameState.Bets[betIndex].Amount;
+
+            bool dealerIsBust = RulesService.HandIsBust(_dealerHand);
+            bool handdIsBust = RulesService.HandIsBust(targetHand);
+
+            bool resultSameHands = RulesService.HandValue(targetHand) == RulesService.HandValue(_dealerHand);
+            bool handBeatsDealer = RulesService.HandValue(targetHand) > RulesService.HandValue(_dealerHand);
+
+            if (handdIsBust)
+            {
+                Console.WriteLine($"{targetPlayer.Name} is busted, house wins ${targetBetAmount}");
+                _gameState.HouseBalance += targetBetAmount;
+            }
+            else if (dealerIsBust || handBeatsDealer)
+            {
+                decimal winAmount = targetBetAmount * 2;
+                Console.WriteLine($"{targetPlayer.Name} wins ${winAmount}");
+                targetPlayer.Bankroll += winAmount;
+            }
+            else if (resultSameHands)
+            {
+                Console.WriteLine($"{targetPlayer.Name} standoff, returned ${targetBetAmount}");
+                targetPlayer.Bankroll += targetBetAmount;
+            }
+            else
+            {
+                Console.WriteLine($"House wins ${targetBetAmount}");
+                _gameState.HouseBalance += targetBetAmount;
+            }
+        }
+
+        private void HandleRoundEnd()
+        {
+            // Step through Players and Hands in sequential order until the next unresolved bet is found
+            int nextBetIndex = -1;
+            foreach(Player targetPlayer in _gameState.Players)
+            {
+                foreach(Hand targetHand in targetPlayer.HandsInPlay)
+                {
+                    if(nextBetIndex < 0)
+                    {
+                        nextBetIndex = _gameState.Bets.FindIndex(bet => bet.Player == targetPlayer && bet.Hand == targetHand);
+                    }
+                }
+            }
+
+            if(nextBetIndex < 0)
+            {
+                AdvanceGamePhase();
+                return;
+            }
+            ResolveBet(nextBetIndex);
+            _gameState.Bets.RemoveAt(nextBetIndex);
         }
     }
 }
