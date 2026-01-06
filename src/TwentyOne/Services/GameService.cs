@@ -229,37 +229,42 @@ namespace TwentyOne.Services
 
         private void HandleDealerAction()
         {
-            // Determine Dealer action
-            if (_dealerHand.CardsInHand[1].FaceUp == false)
+            if(_gameState.DealerAction == DealerActions.None)
             {
-                _gameState.DealerAction = DealerActions.ShowFaceDown;
-            }
-            else if (RulesService.DealerShouldDraw(_dealerHand))
-            {
-                _gameState.DealerAction = DealerActions.Draw;
+                // Determine Dealer action
+                if (_dealerHand.CardsInHand[1].FaceUp == false)
+                {
+                    _gameState.DealerAction = DealerActions.ShowFaceDown;
+                }
+                else if (RulesService.DealerShouldDraw(_dealerHand))
+                {
+                    _gameState.DealerAction = DealerActions.Draw;
+                }
+                else
+                {
+                    _gameState.DealerAction = DealerActions.Stand;
+                }
             }
             else
             {
-                _gameState.DealerAction = DealerActions.Stand;
-            }
+                // Dealer takes action
+                switch (_gameState.DealerAction)
+                {
+                    case DealerActions.ShowFaceDown:
+                        _gameState.DealerHand.CardsInHand[1].FaceUp = true;
+                        break;
+                    case DealerActions.Draw:
+                        DealCardToDealer();
+                        break;
+                    case DealerActions.Stand:
+                        AdvanceGamePhase(); // Dealer turn ends
+                        break;
+                    default:
+                        break;
+                }
 
-            // Dealer takes action
-            switch (_gameState.DealerAction)
-            {
-                case DealerActions.ShowFaceDown:
-                    _gameState.DealerHand.CardsInHand[1].FaceUp = true;
-                    break;
-                case DealerActions.Draw:
-                    DealCardToDealer();
-                    break;
-                case DealerActions.Stand:
-                    AdvanceGamePhase(); // Dealer turn ends
-                    break;
-                default:
-                    break;
+                _gameState.DealerAction = DealerActions.None;
             }
-
-            _gameState.DealerAction = DealerActions.None;
         }
 
         private void AdvanceGamePhase()
