@@ -400,16 +400,17 @@ namespace TwentyOne.Services
         {
             decimal currentBetAmount = Math.Min(_currentPlayer.Bankroll, GameConstants.DefaultBetAmount);
             _currentPlayer.Bankroll -= currentBetAmount;
-            (Player Player, Hand Hand, decimal Amount) handBet = (_currentPlayer, _currentHand, currentBetAmount);
-            _gameState.Bets.Add(handBet);
+            Bet betForCurrentHand = new(_currentPlayer, _currentHand, currentBetAmount);
+            _gameState.Bets.Add(betForCurrentHand);
         }
 
         private void PlayerDoubleDown()
         {
-            (Player Player, Hand Hand, decimal Amount) handBet = _gameState.Bets.Find(bet => bet.Player == _currentPlayer && bet.Hand == _currentHand);
-            decimal currentBetAmount = handBet.Amount;
+            Bet? betForCurrentHand = _gameState.Bets.Find(bet => bet.Player == _currentPlayer && bet.Hand == _currentHand);
+            if(betForCurrentHand == null) return;
+            decimal currentBetAmount = betForCurrentHand.Amount;
             _currentPlayer.Bankroll -= currentBetAmount;
-            handBet.Amount += currentBetAmount;
+            betForCurrentHand.Amount += currentBetAmount;
         }
 
         private void PlayerHit()

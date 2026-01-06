@@ -11,7 +11,7 @@ namespace TwentyOne.Models
         public int CurrentHandIndex { get; set; } = 0;
         public PlayerActions CurrentPlayerIntent { get; set; } = PlayerActions.None;
         public List<PlayerActions> CurrentPlayerOptions { get; set; } = [PlayerActions.None];
-        public List<(Player Player, Hand Hand, decimal Amount)> Bets = [];
+        public List<Bet> Bets = [];
         public decimal HouseBalance = 0m;
     }
 }
