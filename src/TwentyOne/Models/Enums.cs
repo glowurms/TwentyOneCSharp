@@ -34,4 +34,14 @@ namespace TwentyOne.Models
     {
         Continue, Cancel, Instructions, Quit
     }
+
+    public enum BetType
+    {
+        Normal, DoubleDown, Split
+    }
+
+    public enum BetResolutionType
+    {
+        Win, Lose, Standoff, Busted, DoubleDownWin, None
+    }
 }
