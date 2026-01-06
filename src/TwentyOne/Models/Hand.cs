@@ -2,10 +2,7 @@ namespace TwentyOne.Models
 {
     public class Hand
     {
-        public int TotalCardCount { get { return Cards.Count; } }
-        public List<Card> CardsInHand { get { return Cards; } }
-
-        private readonly List<Card> Cards = [];
+        public readonly List<Card> Cards = [];
 
         public void AddCard(Card card)
         {
@@ -54,7 +51,7 @@ namespace TwentyOne.Models
         public string HandInfo()
         {
             List<string> cardStrings = [.. Cards.Select(c => c.ToString())];
-            return $"Hand[{TotalCardCount}]: [{string.Join(", ", cardStrings)}]";
+            return $"Hand {{ Cards.Count: {Cards.Count}; Cards:[{string.Join(", ", cardStrings)}]";
         }
     }
 }

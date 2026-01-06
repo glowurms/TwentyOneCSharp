@@ -3,15 +3,15 @@ namespace TwentyOne.Models
     public class GameState ()
     {
         public Shoe Shoe { get; set; } = new();
+        public GamePhase GamePhase { get; set; } = GamePhase.Betting;
         public Hand DealerHand { get; set; } = new();
         public DealerActions DealerAction { get; set; } = DealerActions.None;
         public List<Player> Players { get; set; } = [];
-        public GamePhase CurrentGamePhase { get; set; } = GamePhase.Betting;
         public int CurrentPlayerIndex { get; set; } = 0;
         public int CurrentHandIndex { get; set; } = 0;
         public PlayerActions CurrentPlayerIntent { get; set; } = PlayerActions.None;
         public List<PlayerActions> CurrentPlayerOptions { get; set; } = [PlayerActions.None];
-        public List<Bet> Bets = [];
-        public decimal HouseBalance = 0m;
+        public List<Bet> ActiveBets = [];
+        public decimal TableWinnings = 0m; // Unimportant, but interesting stat
     }
 }

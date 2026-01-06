@@ -4,12 +4,12 @@ namespace TwentyOne.Models
     {
         public string Name { get; set; } = name;
         public decimal Bankroll { get; set; } = startingBankroll;
-        public List<Hand> HandsInPlay { get; set; } = [];
+        public List<Hand> Hands { get; set; } = [];
         public bool SittingOut { get; set; } = false;
 
         public string PlayerInfo()
         {
-            return $"Player: Name[{Name}], Bankroll[{Bankroll}], HandsInPlay[{HandsInPlay.Count}]";
+            return $"Player{{ Name: {Name}; Bankroll: {Bankroll}; HandCount: {Hands.Count}; SittingOut: ${SittingOut} }}";
         }
     }
 }

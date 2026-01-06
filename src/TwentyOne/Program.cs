@@ -7,6 +7,8 @@ namespace TwentyOne
     {
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8; // Allows display of suits ♣ ♦ ♥ ♠
+
             bool running = true;
             bool updateConsole = true;
 
@@ -62,7 +64,6 @@ namespace TwentyOne
                         default:
                             break;
                     }
-                    // GameDisplayService.ClearGame();
                 }
                 else if (PlayerActionKeys.TryGetValue(playerInput.Key, out PlayerActions playerHandAction))
                 {

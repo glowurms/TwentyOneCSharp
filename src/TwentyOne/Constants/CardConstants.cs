@@ -40,9 +40,9 @@ public static class CardConstants
 
     public static readonly Dictionary<Suit, string> SuitAbbreviations = new()
     {
-        { Suit.Clubs, "♣" },
-        { Suit.Diamonds, "♦" },
-        { Suit.Hearts, "♥" },
-        { Suit.Spades, "♠" }
+        { Suit.Clubs, "\u2663" },       // ♣
+        { Suit.Diamonds, "\u2666" },    // ♦
+        { Suit.Hearts, "\u2665" },      // ♥
+        { Suit.Spades, "\u2660" }       // ♠
     };
 }

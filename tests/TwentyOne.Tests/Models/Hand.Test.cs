@@ -9,11 +9,16 @@ namespace TwentyOne.Tests.Models
         {
             Hand hand = new();
             Card card = new(Rank.Ten, Suit.Hearts);
+            Card card2 = new(Rank.Ace, Suit.Hearts);
 
             hand.AddCard(card);
+            Assert.Single(hand.Cards);
 
-            Assert.Equal(1, hand.TotalCardCount);
-            Assert.Contains(card, hand.CardsInHand);
+            hand.AddCard(card2);
+            Assert.Equal(2, hand.Cards.Count);
+
+            Assert.Contains(card, hand.Cards);
+            Assert.Contains(card2, hand.Cards);
         }
 
         [Fact]
@@ -65,8 +70,8 @@ namespace TwentyOne.Tests.Models
 
             Assert.False(removedNotInHand);
             Assert.True(removed);
-            Assert.Equal(0, hand.TotalCardCount);
-            Assert.DoesNotContain(card, hand.CardsInHand);
+            Assert.Empty(hand.Cards);
+            Assert.DoesNotContain(card, hand.Cards);
             Assert.False(removeFromEmptyHand);
         }
 
@@ -79,7 +84,7 @@ namespace TwentyOne.Tests.Models
 
             hand.ClearHand();
 
-            Assert.Equal(0, hand.TotalCardCount);
+            Assert.Empty(hand.Cards);
         }
     }
 }

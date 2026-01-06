@@ -8,8 +8,8 @@ public static class RulesService
     public static int HandValue(Hand hand)
     {
         int value = 0;
-        int aceCount = hand.CardsInHand.Count(card => card.Rank == Rank.Ace);
-        foreach (var card in hand.CardsInHand)
+        int aceCount = hand.Cards.Count(card => card.Rank == Rank.Ace);
+        foreach (var card in hand.Cards)
         {
             if (card.Rank != Rank.Ace)
             {
@@ -31,12 +31,12 @@ public static class RulesService
 
     public static bool HandIsNatural(Hand hand)
     {
-        return hand.TotalCardCount == 2 && HandValue(hand) == 21; 
+        return hand.Cards.Count == 2 && HandValue(hand) == 21; 
     }
 
     public static bool CanDoubleDown(Hand hand)
     {
-        bool handIsOnlyTwoCards = hand.CardsInHand.Count == 2;
+        bool handIsOnlyTwoCards = hand.Cards.Count == 2;
         int handValue = HandValue(hand);
         return handIsOnlyTwoCards && handValue >= 9 && handValue <= 11; 
     }
@@ -44,8 +44,8 @@ public static class RulesService
     public static bool CanSplitHand(Hand hand, int playerHandCount)
     {
         bool resplitAllowed = playerHandCount < GameConstants.MaxResplitCount;
-        bool handIsOnlyTwoCards = hand.CardsInHand.Count == 2;
-        bool cardsMatch = hand.CardsInHand[0].Rank == hand.CardsInHand[1].Rank;
+        bool handIsOnlyTwoCards = hand.Cards.Count == 2;
+        bool cardsMatch = hand.Cards[0].Rank == hand.Cards[1].Rank;
         return resplitAllowed && handIsOnlyTwoCards && cardsMatch; 
     }
 

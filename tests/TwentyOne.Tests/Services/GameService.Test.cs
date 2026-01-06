@@ -22,7 +22,7 @@ public class GameServiceTest
 
         Assert.Equal(shoeCount, gameState.Shoe.DeckCount);
         Assert.Equal(expectedPlayerCount, gameState.Players.Count);
-        Assert.Equal(GamePhase.Betting, gameState.CurrentGamePhase);
+        Assert.Equal(GamePhase.Betting, gameState.GamePhase);
 
         foreach(Player player in gameState.Players)
         {

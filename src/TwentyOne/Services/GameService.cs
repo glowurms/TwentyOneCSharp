@@ -46,7 +46,7 @@ namespace TwentyOne.Services
 
         private GameState _gameState;
         private Player _currentPlayer { get { return _gameState.Players[_gameState.CurrentPlayerIndex]; } }
-        private Hand _currentHand { get { return _currentPlayer.HandsInPlay[_gameState.CurrentHandIndex]; } }
+        private Hand _currentHand { get { return _currentPlayer.Hands[_gameState.CurrentHandIndex]; } }
         private Hand _dealerHand { get { return _gameState.DealerHand; } }
 
         public GameService()
@@ -109,7 +109,7 @@ namespace TwentyOne.Services
         // Advance the game
         public void ContinueGame()
         {
-            switch (_gameState.CurrentGamePhase)
+            switch (_gameState.GamePhase)
             {
                 case GamePhase.Betting:
                     HandlePlayerAction();
@@ -192,7 +192,7 @@ namespace TwentyOne.Services
         {
             _gameState.CurrentPlayerOptions.Clear();
 
-            switch (_gameState.CurrentGamePhase)
+            switch (_gameState.GamePhase)
             {
                 case GamePhase.Betting:
                     if (_currentPlayer.Bankroll > 0m)
@@ -215,7 +215,7 @@ namespace TwentyOne.Services
                         _gameState.CurrentPlayerOptions.Add(PlayerActions.DoubleDown);
                     }
 
-                    if (RulesService.CanSplitHand(_currentHand, _currentPlayer.HandsInPlay.Count))
+                    if (RulesService.CanSplitHand(_currentHand, _currentPlayer.Hands.Count))
                     {
                         _gameState.CurrentPlayerOptions.Add(PlayerActions.Split);
                     }
@@ -232,7 +232,7 @@ namespace TwentyOne.Services
             if(_gameState.DealerAction == DealerActions.None)
             {
                 // Determine Dealer action
-                if (_dealerHand.CardsInHand[1].FaceUp == false)
+                if (_dealerHand.Cards[1].FaceUp == false)
                 {
                     _gameState.DealerAction = DealerActions.ShowFaceDown;
                 }
@@ -251,7 +251,7 @@ namespace TwentyOne.Services
                 switch (_gameState.DealerAction)
                 {
                     case DealerActions.ShowFaceDown:
-                        _gameState.DealerHand.CardsInHand[1].FaceUp = true;
+                        _gameState.DealerHand.Cards[1].FaceUp = true;
                         break;
                     case DealerActions.Draw:
                         DealCardToDealer();
@@ -269,7 +269,7 @@ namespace TwentyOne.Services
 
         private void AdvanceGamePhase()
         {
-            switch (_gameState.CurrentGamePhase)
+            switch (_gameState.GamePhase)
             {
                 case GamePhase.Betting:
                     GamePhaseEnd(GamePhase.Betting);
@@ -312,27 +312,27 @@ namespace TwentyOne.Services
             switch (targetPhase)
             {
                 case GamePhase.Betting:
-                    _gameState.CurrentGamePhase = GamePhase.Betting;
+                    _gameState.GamePhase = GamePhase.Betting;
                     ResetHands();
                     UpdateCurrentPlayerOptions();
                     break;
                 case GamePhase.Dealing:
-                    _gameState.CurrentGamePhase = GamePhase.Dealing;
+                    _gameState.GamePhase = GamePhase.Dealing;
                     _gameState.Shoe.TendShoe();
                     break;
                 case GamePhase.Naturals:
-                    _gameState.CurrentGamePhase = GamePhase.Naturals;
+                    _gameState.GamePhase = GamePhase.Naturals;
                     // TODO: Simulate or implement Naturals GamePhaseBegin Scenario
                     break;
                 case GamePhase.PlayerTurns:
-                    _gameState.CurrentGamePhase = GamePhase.PlayerTurns;
+                    _gameState.GamePhase = GamePhase.PlayerTurns;
                     UpdateCurrentPlayerOptions();
                     break;
                 case GamePhase.DealerTurn:
-                    _gameState.CurrentGamePhase = GamePhase.DealerTurn;
+                    _gameState.GamePhase = GamePhase.DealerTurn;
                     break;
                 case GamePhase.RoundEnd:
-                    _gameState.CurrentGamePhase = GamePhase.RoundEnd;
+                    _gameState.GamePhase = GamePhase.RoundEnd;
                     break;
                 default:
                     break;
@@ -364,7 +364,7 @@ namespace TwentyOne.Services
             int playerIndex = _gameState.CurrentPlayerIndex;
             int handIndex = _gameState.CurrentHandIndex;
 
-            if (handIndex + 1 < _gameState.Players[playerIndex].HandsInPlay.Count)
+            if (handIndex + 1 < _gameState.Players[playerIndex].Hands.Count)
             {
                 // Move to next hand for current player
                 _gameState.CurrentHandIndex++;
@@ -393,7 +393,7 @@ namespace TwentyOne.Services
         {
             foreach(Player player in _gameState.Players)
             {
-                if (RulesService.HandIsNatural(player.HandsInPlay[0]))
+                if (RulesService.HandIsNatural(player.Hands[0]))
                 {
                     return true;
                 }
@@ -406,12 +406,12 @@ namespace TwentyOne.Services
             decimal currentBetAmount = Math.Min(_currentPlayer.Bankroll, GameConstants.DefaultBetAmount);
             _currentPlayer.Bankroll -= currentBetAmount;
             Bet betForCurrentHand = new(_currentPlayer, _currentHand, currentBetAmount);
-            _gameState.Bets.Add(betForCurrentHand);
+            _gameState.ActiveBets.Add(betForCurrentHand);
         }
 
         private void PlayerDoubleDown()
         {
-            Bet? betForCurrentHand = _gameState.Bets.Find(bet => bet.Player == _currentPlayer && bet.Hand == _currentHand);
+            Bet? betForCurrentHand = _gameState.ActiveBets.Find(bet => bet.Player == _currentPlayer && bet.Hand == _currentHand);
             if(betForCurrentHand == null) return;
             decimal currentBetAmount = betForCurrentHand.Amount;
             _currentPlayer.Bankroll -= currentBetAmount;
@@ -427,12 +427,12 @@ namespace TwentyOne.Services
         {
             // TODO: Rework for multiple splits and adding bet for additional hand
             Hand splitHandOne = new();
-            splitHandOne.AddCard(_currentHand.CardsInHand[0]);
+            splitHandOne.AddCard(_currentHand.Cards[0]);
             Hand splitHandTwo = new();
-            splitHandTwo.AddCard(_currentHand.CardsInHand[1]);
-            _currentPlayer.HandsInPlay.Clear();
-            _currentPlayer.HandsInPlay.Add(splitHandOne);
-            _currentPlayer.HandsInPlay.Add(splitHandTwo);
+            splitHandTwo.AddCard(_currentHand.Cards[1]);
+            _currentPlayer.Hands.Clear();
+            _currentPlayer.Hands.Add(splitHandOne);
+            _currentPlayer.Hands.Add(splitHandTwo);
         }
 
         private Card DrawCard(bool faceUp = true)
@@ -466,8 +466,8 @@ namespace TwentyOne.Services
         {
             foreach (Player player in _gameState.Players)
             {
-                player.HandsInPlay.Clear();
-                player.HandsInPlay.Add(new Hand());
+                player.Hands.Clear();
+                player.Hands.Add(new Hand());
             }
             _gameState.DealerHand = new Hand();
         }
@@ -477,13 +477,13 @@ namespace TwentyOne.Services
             bool atFirstPlayerIndex = _gameState.CurrentPlayerIndex == 0;
 
             // Draw Card for Dealer
-            if(atFirstPlayerIndex && _dealerHand.TotalCardCount < _currentHand.TotalCardCount)
+            if(atFirstPlayerIndex && _dealerHand.Cards.Count < _currentHand.Cards.Count)
             {
-                bool faceUp = _dealerHand.TotalCardCount != 1;
+                bool faceUp = _dealerHand.Cards.Count != 1;
                 DealCardFaceDownToDealer();
             }
             // Draw Card for Player
-            else if(_currentHand.TotalCardCount < 2)
+            else if(_currentHand.Cards.Count < 2)
             {
                 DealCardToPlayer();
                 if (!MoveToNextHand())
@@ -520,9 +520,9 @@ namespace TwentyOne.Services
 
         private void ResolveBet(int betIndex)
         {
-            Player targetPlayer = _gameState.Bets[betIndex].Player;
-            Hand targetHand = _gameState.Bets[betIndex].Hand;
-            decimal targetBetAmount = _gameState.Bets[betIndex].Amount;
+            Player targetPlayer = _gameState.ActiveBets[betIndex].Player;
+            Hand targetHand = _gameState.ActiveBets[betIndex].Hand;
+            decimal targetBetAmount = _gameState.ActiveBets[betIndex].Amount;
 
             bool dealerIsBust = RulesService.HandIsBust(_dealerHand);
             bool handdIsBust = RulesService.HandIsBust(targetHand);
@@ -533,7 +533,7 @@ namespace TwentyOne.Services
             if (handdIsBust)
             {
                 Console.WriteLine($"{targetPlayer.Name} is busted, house wins ${targetBetAmount}");
-                _gameState.HouseBalance += targetBetAmount;
+                _gameState.TableWinnings += targetBetAmount;
             }
             else if (dealerIsBust || handBeatsDealer)
             {
@@ -549,7 +549,7 @@ namespace TwentyOne.Services
             else
             {
                 Console.WriteLine($"House wins ${targetBetAmount}");
-                _gameState.HouseBalance += targetBetAmount;
+                _gameState.TableWinnings += targetBetAmount;
             }
         }
 
@@ -559,11 +559,11 @@ namespace TwentyOne.Services
             int nextBetIndex = -1;
             foreach(Player targetPlayer in _gameState.Players)
             {
-                foreach(Hand targetHand in targetPlayer.HandsInPlay)
+                foreach(Hand targetHand in targetPlayer.Hands)
                 {
                     if(nextBetIndex < 0)
                     {
-                        nextBetIndex = _gameState.Bets.FindIndex(bet => bet.Player == targetPlayer && bet.Hand == targetHand);
+                        nextBetIndex = _gameState.ActiveBets.FindIndex(bet => bet.Player == targetPlayer && bet.Hand == targetHand);
                     }
                 }
             }
@@ -574,7 +574,7 @@ namespace TwentyOne.Services
                 return;
             }
             ResolveBet(nextBetIndex);
-            _gameState.Bets.RemoveAt(nextBetIndex);
+            _gameState.ActiveBets.RemoveAt(nextBetIndex);
         }
     }
 }

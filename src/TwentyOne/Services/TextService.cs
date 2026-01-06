@@ -9,6 +9,7 @@ public static class TextService
     {
         { GamePhase.Betting, "Taking Bets" },
         { GamePhase.Dealing, "Dealing Cards" },
+        { GamePhase.Naturals, "Handling player Naturals (21)" },
         { GamePhase.PlayerTurns, "Player Turn" },
         { GamePhase.DealerTurn, "Dealer Turn" },
         { GamePhase.RoundEnd, "Round End" }
@@ -54,38 +55,85 @@ public static class TextService
         }
     }
 
+    public static string CardText(Card card, bool shortHand = false)
+    {
+        if (shortHand)
+        {
+            return $"{CardConstants.RankAbbreviations[card.Rank]}{CardConstants.SuitAbbreviations[card.Suit]}";
+        }
+        return $"{card.Rank} of {card.Suit}";
+    }
+
+    public static List<string> CardTexts(Hand hand, bool shortHand = false)
+    {
+        List<string> CardTexts = [];
+        foreach(Card card in hand.Cards)
+        {
+            CardTexts.Add(TextService.CardText(card, shortHand));
+        }
+        return CardTexts;
+    }
+
+    public static string CardsTextInline(Hand hand, bool shortHand = false)
+    {
+        return string.Join(", ", CardTexts(hand, shortHand));
+    }
+
     public static string GameStateSummary(GameState gameState)
     {
-        string rule = "====================================================";
-        string thinRule = "----------------------------------------------------";
+
+        string rule = "========================== ♣ ♦ ♥ ♠ ==========================";
+        string thinRule = "-------------------------- ♣ ♦ ♥ ♠ --------------------------";
         List<string> gameInfo = [];
         gameInfo.Add(rule);
 
         // Basic game state info
-        gameInfo.Add($"GamePhase: {gameState.CurrentGamePhase}, Players: {gameState.Players.Count}, CardsLeft: {gameState.Shoe.UndealtCardCount}");
+        gameInfo.Add($"GamePhase: {gameState.GamePhase}, Players: {gameState.Players.Count}, CardsLeft: {gameState.Shoe.UndealtCardCount}");
 
         // Dealer info
-        gameInfo.Add(thinRule);
-        gameInfo.Add("Dealer:");
-        gameInfo.Add($"Value: {RulesService.HandValue(gameState.DealerHand)}; {gameState.DealerHand.HandInfo()}");
+        gameInfo.Add(rule);
+        gameInfo.Add($"DEALER (TableWinnings: ${gameState.TableWinnings})");
+        List<string> dealerHandInfo = [];
+        if (gameState.DealerHand.Cards.Count > 0)
+        {
+            dealerHandInfo.Add($"Hand ({RulesService.HandValue(gameState.DealerHand)}) Cards: {CardsTextInline(gameState.DealerHand, true)}");
+        }
+        if(dealerHandInfo.Count > 0)
+        {
+            gameInfo.Add(string.Join(" ", dealerHandInfo));
+        }
+        gameInfo.Add(rule);
 
         // Player info
         foreach (Player player in gameState.Players)
         {
-            gameInfo.Add(thinRule);
-            gameInfo.Add(player.PlayerInfo());
+            gameInfo.Add($"{player.Name} (Bankroll: ${player.Bankroll})");
 
             // Hands info
-            foreach (Hand hand in player.HandsInPlay)
+            foreach (Hand currentHand in player.Hands)
             {
-                gameInfo.Add($"Value: {RulesService.HandValue(hand)}; {hand.HandInfo()}");
+                List<string> currentHandInfo = [];
+                Bet? betForCurrentHand = gameState.ActiveBets.Find(bet => bet.Hand == currentHand);
+                if(betForCurrentHand != null)
+                {
+                    currentHandInfo.Add($"Bet ${betForCurrentHand.Amount}");
+                }
+                if(currentHand.Cards.Count > 0)
+                {
+                    currentHandInfo.Add($"Hand ({RulesService.HandValue(currentHand)}) Cards: {CardsTextInline(currentHand, true)}");
+                }
+                if(currentHandInfo.Count > 0)
+                {
+                    gameInfo.Add(string.Join(" ", currentHandInfo));
+                }
             }
+            gameInfo.Add(thinRule);
         }
 
-        gameInfo.Add(thinRule);
-        gameInfo.Add(GamePhaseDescriptions[gameState.CurrentGamePhase]);
+        gameInfo.Add(rule);
+        gameInfo.Add(GamePhaseDescriptions[gameState.GamePhase]);
 
-        switch (gameState.CurrentGamePhase)
+        switch (gameState.GamePhase)
         {
             case GamePhase.Betting:
                 gameInfo.Add(thinRule);

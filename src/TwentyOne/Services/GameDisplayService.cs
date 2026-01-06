@@ -72,7 +72,7 @@ namespace TwentyOne.Services
 
             playerTable.AddRow(bankrollPanel);
 
-            foreach (var hand in player.HandsInPlay)
+            foreach (var hand in player.Hands)
             {
                 playerTable.AddRow(CreateHandPanel(hand));
             }
@@ -108,7 +108,7 @@ namespace TwentyOne.Services
         private static Panel CreateHandPanel(Hand hand)
         {
             List<string> cardStrings = [];
-            foreach (Card card in hand.CardsInHand)
+            foreach (Card card in hand.Cards)
             {
                 cardStrings.Add(card.ToString());
             }
@@ -125,7 +125,7 @@ namespace TwentyOne.Services
         private Columns CreatePlayerHands()
         {
             List<Panel> handPanels = [];
-            foreach (var hand in _gameState.Players[0].HandsInPlay)
+            foreach (var hand in _gameState.Players[0].Hands)
             {
                 handPanels.Add(CreateHandPanel(hand));
             }
