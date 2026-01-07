@@ -4,6 +4,7 @@ namespace TwentyOne.Models
     {
         public Shoe Shoe { get; set; } = new();
         public GamePhase GamePhase { get; set; } = GamePhase.Betting;
+        public GamePhaseStage GamePhaseStage { get; set; } = GamePhaseStage.Begin;
         public decimal TableWinnings = 0m; // Unimportant, but interesting stat
 
         public Hand DealerHand { get; set; } = new();
