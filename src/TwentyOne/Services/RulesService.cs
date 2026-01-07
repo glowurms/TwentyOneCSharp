@@ -43,11 +43,17 @@ public static class RulesService
 
     public static bool CanSplitHand(Hand hand, int playerHandCount)
     {
-        bool resplitAllowed = playerHandCount < GameConstants.MaxResplitCount;
-        bool handIsOnlyTwoCards = hand.Cards.Count == 2;
-        // BUG: Should return false before proceeding if not exactly 2 cards
-        bool cardsMatch = hand.Cards[0].Rank == hand.Cards[1].Rank;
-        return resplitAllowed && handIsOnlyTwoCards && cardsMatch; 
+        if(hand.Cards.Count == 2)
+        {
+            if(hand.Cards[0].Rank != hand.Cards[1].Rank)
+            {
+                if(playerHandCount < GameConstants.MaxResplitCount)
+                {
+                    return true;
+                }
+            }
+        } 
+        return false; 
     }
 
     public static bool DealerShouldDraw(Hand dealerHand)
