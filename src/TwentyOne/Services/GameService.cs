@@ -476,8 +476,9 @@ namespace TwentyOne.Services
 
             if(_gameState.CurrentPlayerIntent != PlayerActions.None)
             {
-                // BUG: LastPlayer should probably be updated with this. Seeing previous player after second hit
                 _gameState.LastPlayerIntent = _gameState.CurrentPlayerIntent;
+                _gameState.LastPlayer = _currentPlayer;
+                _gameState.LastHand = _currentHand;
             }
 
             _gameState.CurrentPlayerIntent = PlayerActions.None;
