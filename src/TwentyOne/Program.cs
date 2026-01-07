@@ -1,4 +1,5 @@
-﻿using TwentyOne.Models;
+﻿using TwentyOne.Constants;
+using TwentyOne.Models;
 using TwentyOne.Services;
 
 namespace TwentyOne
@@ -7,68 +8,38 @@ namespace TwentyOne
     {
         static void Main(string[] args)
         {
+            bool running = true;
             Console.OutputEncoding = System.Text.Encoding.UTF8; // Allows display of suits ♣ ♦ ♥ ♠
 
-            bool running = true;
-            bool updateConsole = true;
-
-            // Key bindings for game actions
-            Dictionary<ConsoleKey, GameActions> GameActionKeys = new()
-            {
-                { ConsoleKey.Spacebar, GameActions.Continue },
-                { ConsoleKey.Escape, GameActions.Cancel },
-                { ConsoleKey.I, GameActions.Instructions },
-                { ConsoleKey.Q, GameActions.Quit }
-            };
-
-            // Key bindings for player actions
-            Dictionary<ConsoleKey, PlayerActions> PlayerActionKeys = new()
-            {
-                { ConsoleKey.B, PlayerActions.Bet },
-                { ConsoleKey.F, PlayerActions.Hit },
-                { ConsoleKey.S, PlayerActions.Stand },
-                { ConsoleKey.D, PlayerActions.DoubleDown },
-                { ConsoleKey.A, PlayerActions.Split }
-            };
-
             GameService gameService = new();
+            gameService.StateChanged = () =>
+            {
+                // Redraw
+                Console.Clear();
+                Console.WriteLine(TextService.GameStateSummary(gameService.GameState));
+            };
+
             gameService.StartNewGame(3, 500, 6);
-            // GameDisplayService gameDisplay = new(ref gameService);
 
             while (running)
             {
-                // gameDisplay.RenderGame();
-                if (updateConsole)
-                {
-                    Console.Clear();
-                    Console.WriteLine(TextService.GameStateSummary(gameService.GameState));
-                    updateConsole = false;
-                }
-
                 ConsoleKeyInfo playerInput = Console.ReadKey(true);
-
-                if (GameActionKeys.TryGetValue(playerInput.Key, out GameActions gameAction))
+                // Game Specific keypress captured
+                if (Keybinds.GameAction.TryGetValue(playerInput.Key, out GameActions gameAction))
                 {
-                    switch (gameAction)
+                    if(gameAction == GameActions.Cancel || gameAction == GameActions.Quit)
                     {
-                        case GameActions.Cancel:
-                            running = false;
-                            break;
-                        case GameActions.Quit:
-                            running = false;
-                            break;
-                        case GameActions.Continue:
-                            gameService.ContinueGame();
-                            updateConsole = true;
-                            break;
-                        default:
-                            break;
+                        running = false;
+                    }
+                    else if(gameAction == GameActions.Continue)
+                    {
+                        gameService.ContinueGame();
                     }
                 }
-                else if (PlayerActionKeys.TryGetValue(playerInput.Key, out PlayerActions playerHandAction))
+                // Player specific keypress captured
+                else if (Keybinds.PlayerAction.TryGetValue(playerInput.Key, out PlayerActions playerHandAction))
                 {
                     gameService.SelectPlayerAction(playerHandAction);
-                    updateConsole = true;
                 }
             }
             Console.Clear();
