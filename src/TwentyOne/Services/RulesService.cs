@@ -45,6 +45,7 @@ public static class RulesService
     {
         bool resplitAllowed = playerHandCount < GameConstants.MaxResplitCount;
         bool handIsOnlyTwoCards = hand.Cards.Count == 2;
+        // BUG: Should return false before proceeding if not exactly 2 cards
         bool cardsMatch = hand.Cards[0].Rank == hand.Cards[1].Rank;
         return resplitAllowed && handIsOnlyTwoCards && cardsMatch; 
     }
