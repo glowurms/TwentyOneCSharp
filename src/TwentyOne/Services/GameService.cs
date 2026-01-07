@@ -40,9 +40,13 @@ namespace TwentyOne.Services
             - Player hand value == dealer hand value -> push - player bet returned
 
     */
+
+    public delegate void GameServiceStateChanged();
+
     public class GameService
     {
         public GameState GameState { get { return _gameState; } }
+        public GameServiceStateChanged? StateChanged;
 
         private GameState _gameState;
         private Player _currentPlayer { get { return _gameState.Players[_gameState.CurrentPlayerIndex]; } }
@@ -103,6 +107,7 @@ namespace TwentyOne.Services
             }
 
             GamePhaseBegin(GamePhase.Betting);
+            StateChanged?.Invoke();
             return _gameState;
         }
 
@@ -134,6 +139,7 @@ namespace TwentyOne.Services
                 default:
                     break;
             }
+            StateChanged?.Invoke();
         }
 
         public bool SelectPlayerAction(PlayerActions playerAction)
@@ -191,6 +197,7 @@ namespace TwentyOne.Services
                     AdvanceGamePhase();
                 }
             }
+            StateChanged?.Invoke();
         }
 
         private void UpdateCurrentPlayerOptions()
@@ -230,6 +237,7 @@ namespace TwentyOne.Services
                     _gameState.CurrentPlayerOptions.Add(PlayerActions.None);
                     break;
             }
+            StateChanged?.Invoke();
         }
 
         private void HandleDealerAction()
