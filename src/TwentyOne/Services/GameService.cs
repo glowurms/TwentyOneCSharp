@@ -50,7 +50,7 @@ namespace TwentyOne.Services
 
         private GameState _gameState;
         private Player _currentPlayer { get { return _gameState.Players[_gameState.CurrentPlayerIndex]; } }
-        private Hand _currentHand { get { return _currentPlayer.Hands[_gameState.CurrentHandIndex]; } }
+        private Hand _currentHand { get { return _currentPlayer.Hands[_gameState.CurrentPlayerHandIndex]; } }
         private Hand _dealerHand { get { return _gameState.DealerHand; } }
 
         public GameService()
@@ -297,7 +297,7 @@ namespace TwentyOne.Services
         private bool MoveToNextHand()
         {
             int playerIndex = _gameState.CurrentPlayerIndex;
-            int handIndex = _gameState.CurrentHandIndex;
+            int handIndex = _gameState.CurrentPlayerHandIndex;
 
             _gameState.LastPlayer = _currentPlayer;
             _gameState.LastHand = _currentHand;
@@ -305,13 +305,13 @@ namespace TwentyOne.Services
             if (handIndex + 1 < _gameState.Players[playerIndex].Hands.Count)
             {
                 // Move to next hand for current player
-                _gameState.CurrentHandIndex++;
+                _gameState.CurrentPlayerHandIndex++;
             }
             else if (playerIndex + 1 < _gameState.Players.Count)
             {
                 // Move to next player
                 _gameState.CurrentPlayerIndex++;
-                _gameState.CurrentHandIndex = 0;
+                _gameState.CurrentPlayerHandIndex = 0;
             }
             else
             {
@@ -324,7 +324,7 @@ namespace TwentyOne.Services
         private void ResetCurrentPlayerAndHandIndex()
         {
             _gameState.CurrentPlayerIndex = 0;
-            _gameState.CurrentHandIndex = 0;
+            _gameState.CurrentPlayerHandIndex = 0;
         }
 
         private bool ShouldProceedToNaturalsPhase()

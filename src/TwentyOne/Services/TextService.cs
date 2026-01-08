@@ -212,7 +212,7 @@ public static class TextService
         List<string> handInfos = [];
         foreach (Hand currentHand in player.Hands)
         {
-            bool isCurrentHand = isCurrentPlayer && currentHand == player.Hands[gameState.CurrentHandIndex];
+            bool isCurrentHand = isCurrentPlayer && currentHand == player.Hands[gameState.CurrentPlayerHandIndex];
             string prefix = (isCurrentHand) ? "-> " : string.Empty;
             string currentHandInfo = prefix + HandInfoText(gameState, currentHand);
             if (currentHandInfo.Length > 0)
@@ -354,7 +354,7 @@ public static class TextService
         gameStateProperties.Add($"GamePhase: {gameState.GamePhase}; GamePhaseStage: {gameState.GamePhaseStage}");
 
         gameStateProperties.Add("== Current things ==");
-        gameStateProperties.Add($"HandIndex: {gameState.CurrentHandIndex}; PlayerIndex: {gameState.CurrentPlayerIndex}");
+        gameStateProperties.Add($"HandIndex: {gameState.CurrentPlayerHandIndex}; PlayerIndex: {gameState.CurrentPlayerIndex}");
         gameStateProperties.Add($"PlayerIntent: {gameState.CurrentPlayerIntent}");
         gameStateProperties.Add($"PlayerOptions: [{string.Join(", ", PlayerOptionsTexts(gameState))}]");
         gameStateProperties.Add($"DealerAction: {gameState.DealerAction}; DealerHand: {CardsTextInline(gameState.DealerHand, true)}");

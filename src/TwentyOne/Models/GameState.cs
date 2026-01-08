@@ -12,7 +12,7 @@ namespace TwentyOne.Models
 
         public List<Player> Players { get; set; } = [];
         public int CurrentPlayerIndex { get; set; } = 0;
-        public int CurrentHandIndex { get; set; } = 0;
+        public int CurrentPlayerHandIndex { get; set; } = 0;
 
         public PlayerActions CurrentPlayerIntent { get; set; } = PlayerActions.None;
         public List<PlayerActions> CurrentPlayerOptions { get; set; } = [PlayerActions.None];
