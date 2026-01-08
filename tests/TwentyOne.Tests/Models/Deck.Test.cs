@@ -50,7 +50,7 @@ namespace TwentyOne.Tests.Models
             for (int i = 0; i < 10; i++)
             {
                 card = deck.DealCard();
-                if (card != null)
+                if (card is not null)
                 {
                     unshuffledHand.Add(card.ToString());
                 }
@@ -61,7 +61,7 @@ namespace TwentyOne.Tests.Models
             for (int i = 0; i < 10; i++)
             {
                 card = deck.DealCard();
-                if (card != null)
+                if (card is not null)
                 {
                     shuffledHand.Add(card.ToString());
                 }
