@@ -44,23 +44,10 @@ public static class TextService
 
     public static readonly string HorizontalRule =     "================================== ♣ ♦ ♥ ♠ ==================================";
     public static readonly string HorizontalRuleThin = "-----------------------------------------------------------------------------";
-
-    public static string PlayerActionSummary(GameState gameState)
-    {
-        Player currentPlayer = gameState.Players[gameState.CurrentPlayerIndex];
-        if (gameState.CurrentPlayerIntent == PlayerActions.None)
-        {
-            return $"{currentPlayer.Name}'s turn to {string.Join(", ", gameState.CurrentPlayerOptions)}";
-        }
-        else
-        {
-            return $"{currentPlayer.Name} {PlayerActionTakenText[gameState.CurrentPlayerIntent]}";
-        }
-    }
+    public static readonly string ContinueOptionText = $"[{Keybinds.GameActionToKey[GameActions.Continue]}] Continue";
 
     public static string CardText(Card card, bool shortHand = false)
     {
-
         if (shortHand)
         {
             if(card.FaceUp == false)
@@ -91,235 +78,320 @@ public static class TextService
         return string.Join(", ", CardsTexts(hand, shortHand));
     }
 
-    private static string HandInfoText(GameState gameState, Hand hand)
+    public static string HandTotalAndCardsText(Hand hand, bool shortHand = false)
     {
-        List<string> handInfo = [];
-        Bet? betForHand = gameState.ActiveBets.Find(bet => bet.Hand == hand);
-        if (betForHand != null)
-        {
-            if (betForHand.Type == BetType.DoubleDown)
-            {
-                handInfo.Add($"Double down ${betForHand.Amount}");
-            }
-            else if (betForHand.Type == BetType.DoubleDown)
-            {
-                handInfo.Add($"Split ${betForHand.Amount}");
-            }
-            else
-            {
-                handInfo.Add($"Bet ${betForHand.Amount}");
-            }
-        }
-        if (hand.Cards.Count > 0)
-        {
-            handInfo.Add($"Hand ({RulesService.HandValue(hand)}) Cards: {CardsTextInline(hand, true)}");
-        }
-        return string.Join(" -- ", handInfo);
+        return $"Total ({RulesService.HandValue(hand)}) Cards: {CardsTextInline(hand, shortHand)}";
     }
 
-    private static string PlayerInfoText(GameState gameState, Player player)
+    public static string PlayerActionText(PlayerActions action, bool showKeybinds = false)
     {
-        List<string> playerInfo = [];
-        playerInfo.Add($"${player.Bankroll} -- {player.Name}");
-
-        List<string> HandInfos = [];
-        // Hands info
-        foreach (Hand currentHand in player.Hands)
+        if (showKeybinds)
         {
-            string currentHandInfo = HandInfoText(gameState, currentHand);
-            if (currentHandInfo.Length > 0)
-            {
-                HandInfos.Add(currentHandInfo);
-            }
+            return $"[{Keybinds.ToPlayerActionToKey[action]}] {action}";
         }
-        if (HandInfos.Count > 0)
-        {
-            playerInfo.Add(string.Join("\n", HandInfos));
-        }
-        return string.Join("\n", playerInfo);
+        return action.ToString();
+        
     }
 
-    private static string PlayersInfoText(GameState gameState)
+    public static List<string> PlayerOptionsTexts(GameState gameState, bool showKeybinds = false)
     {
-        List<string> playerInfoTexts = [];
-        foreach (Player player in gameState.Players)
+        List<string> playerOptions = [];
+        foreach(PlayerActions action in gameState.CurrentPlayerOptions)
         {
-            string playerInfo = PlayerInfoText(gameState, player);
-            if(playerInfo.Length > 0)
-            {
-                playerInfoTexts.Add(playerInfo);
-            }
+            playerOptions.Add(PlayerActionText(action, showKeybinds));
         }
-        return string.Join("\n" + HorizontalRuleThin + "\n", playerInfoTexts);
+        return playerOptions;
+    }
+
+    public static string PlayerOptionsInline(GameState gameState, bool showKeybinds = false)
+    {
+        return string.Join(" ", PlayerOptionsTexts(gameState, showKeybinds));
+    }
+ 
+    public static string PlayerActionDescription(GameState gameState)
+    {
+        Player currentPlayer = gameState.Players[gameState.CurrentPlayerIndex];
+        if (gameState.CurrentPlayerIntent == PlayerActions.None)
+        {
+            return $"{currentPlayer.Name}'s turn";
+        }
+        return $"{currentPlayer.Name} {PlayerActionTakenText[gameState.CurrentPlayerIntent]}";
+    }
+
+    public static string PlayerOptionsDescription(GameState gameState)
+    {
+        if (gameState.CurrentPlayerIntent == PlayerActions.None)
+        {
+            return $"{PlayerOptionsInline(gameState, true)}";
+        }
+        return ContinueOptionText;
     }
 
     public static string GameStateSummary(GameState gameState)
     {
         List<string> gameInfo = [];
-
-        // ==========================
         gameInfo.Add(HorizontalRule); 
-        // ==========================
 
-        // Basic game state info block
-        List<string> basicStateInfo = [];
-        basicStateInfo.Add($"GamePhase: {gameState.GamePhase}");
-        basicStateInfo.Add($"ShoeCards: {gameState.Shoe.UndealtCardCount}");
-        basicStateInfo.Add($"CutCard: {gameState.Shoe.CutCardPosition}");
-        basicStateInfo.Add($"Players: {gameState.Players.Count}");
-        basicStateInfo.Add($"TableTake: {gameState.TableWinnings}");
-        gameInfo.Add(string.Join(", ", basicStateInfo));
+        List<string> gameInfoBlocks = [];
+        gameInfoBlocks.Add(DealerInfoBlock(gameState));
+        gameInfoBlocks.Add(PlayersInfoBlock(gameState));
+        gameInfoBlocks.Add(PreviousGamePhaseInfoBlock(gameState));
+        gameInfoBlocks.Add(GamePhaseInfoBlock(gameState));
 
-        // ==========================
+        gameInfo.Add(string.Join($"\n{HorizontalRule}\n",gameInfoBlocks));
         gameInfo.Add(HorizontalRule); 
-        // ==========================
 
-        // Dealer info block
-        gameInfo.Add($"DEALER");
-        List<string> dealerHandInfo = [];
+        // TODO: debug toggle
+        gameInfo.Add("\n\n");
+        gameInfo.Add(DebugGameStateBlock(gameState));
+
+        return string.Join($"\n", gameInfo);
+    }
+
+    private static string HandInfoText(GameState gameState, Hand hand)
+    {
+        List<string> handInfo = [];
+        Bet? betForHand = gameState.ActiveBets.Find(bet => bet.Hand == hand);
+        if (betForHand is not null)
+        {
+            if (betForHand.Type == BetType.DoubleDown)
+            {
+                handInfo.Add($"${betForHand.Amount} Double down");
+            }
+            else if (betForHand.Type == BetType.DoubleDown)
+            {
+                handInfo.Add($"${betForHand.Amount} Split");
+            }
+            else
+            {
+                handInfo.Add($"${betForHand.Amount}");
+            }
+        }
+        if (hand.Cards.Count > 0)
+        {
+            handInfo.Add(HandTotalAndCardsText(hand, true));
+        }
+        return string.Join(" | ", handInfo);
+    }
+
+    private static string DealerInfoBlock(GameState gameState)
+    {
+        List<string> dealerInfo = [];
+        List<string> dealerHeader = [];
+        dealerHeader.Add($"Shoe Cards: {gameState.Shoe.UndealtCardCount}");
+        dealerHeader.Add($"Cut Card: {gameState.Shoe.CutCardPosition}");
+        dealerHeader.Add($"Cut Card Reached: {(gameState.Shoe.CutCardReached ? "Yes" : "No ")}");
+        dealerHeader.Add($"TableTake: {gameState.TableWinnings}");
+
+        dealerInfo.Add(string.Join(" | ", dealerHeader));
+        dealerInfo.Add(HorizontalRuleThin);
+        dealerInfo.Add("Dealer");
+
         if (gameState.DealerHand.Cards.Count > 0)
         {
-            dealerHandInfo.Add($"Hand ({RulesService.HandValue(gameState.DealerHand)}) Cards: {CardsTextInline(gameState.DealerHand, true)}");
+            dealerInfo.Add(HandTotalAndCardsText(gameState.DealerHand, true));
         }
-        if (dealerHandInfo.Count > 0)
+        else
         {
-            gameInfo.Add(string.Join(" ", dealerHandInfo));
+            dealerInfo.Add(string.Empty);
         }
+        return string.Join("\n", dealerInfo);
+    }
 
-        // ------------------------------
-        gameInfo.Add(HorizontalRuleThin);
-        // ------------------------------
+    private static string PlayerInfo(GameState gameState, Player player)
+    {
+        List<string> playerInfo = [];
+        List<string> playerHeader = [];
+        playerHeader.Add($"${player.Bankroll}");
+        playerHeader.Add(player.Name);
 
-        // Players info block
-        string playerInfoText = PlayersInfoText(gameState);
-        if (playerInfoText.Length > 0)
+        playerInfo.Add(string.Join(" | ", playerHeader));
+
+        bool playerHasOptions = gameState.CurrentPlayerOptions.Count > 0;
+        bool isCurrentPlayer = playerHasOptions && player == gameState.Players[gameState.CurrentPlayerIndex];
+        List<string> handInfos = [];
+        foreach (Hand currentHand in player.Hands)
         {
-            gameInfo.Add(playerInfoText);
+            bool isCurrentHand = isCurrentPlayer && currentHand == player.Hands[gameState.CurrentHandIndex];
+            string prefix = (isCurrentHand) ? "-> " : string.Empty;
+            string currentHandInfo = prefix + HandInfoText(gameState, currentHand);
+            if (currentHandInfo.Length > 0)
+            {
+                handInfos.Add(currentHandInfo);
+            }
+        }
+        playerInfo.Add(string.Join("\n", handInfos));
+        return string.Join("\n", playerInfo);
+    }
+
+    private static string PlayersInfoBlock(GameState gameState)
+    {
+        List<string> playersInfo = [];
+        foreach (Player player in gameState.Players)
+        {
+            playersInfo.Add(PlayerInfo(gameState, player));
+        }
+        return string.Join("\n" + HorizontalRuleThin + "\n", playersInfo);
+    }
+
+    private static string GamePhaseInfoBlock(GameState gameState)
+    {
+        List<string> phaseInfoBlock = [];
+        // Format 4 lines:
+        // Game Phase title
+        // HorizontalRuleThin
+        // Game phase step description
+        // Game phase advance step options with keybind
+
+        phaseInfoBlock.Add($"{GamePhaseDescriptions[gameState.GamePhase]}");
+        phaseInfoBlock.Add(HorizontalRuleThin);
+
+        if(gameState.GamePhaseStage == GamePhaseStage.End)
+        {
+            phaseInfoBlock.Add($"{GamePhaseDescriptions[gameState.GamePhase]} phase complete");
+            phaseInfoBlock.Add(ContinueOptionText);
+        }
+        else
+        {
+            switch (gameState.GamePhase)
+            {
+                case GamePhase.Betting:
+                    phaseInfoBlock.Add(PlayerActionDescription(gameState));
+                    phaseInfoBlock.Add(PlayerOptionsDescription(gameState));
+                    break;
+                case GamePhase.Dealing:
+                    phaseInfoBlock.Add(string.Empty);
+                    phaseInfoBlock.Add(ContinueOptionText);
+                    break;
+                case GamePhase.PlayerTurns:
+                    phaseInfoBlock.Add(PlayerActionDescription(gameState));
+                    phaseInfoBlock.Add(PlayerOptionsDescription(gameState));
+                    break;
+                case GamePhase.DealerTurn:
+                    phaseInfoBlock.Add(string.Empty);
+                    phaseInfoBlock.Add(ContinueOptionText);
+                    break;
+                case GamePhase.RoundEnd:
+                    phaseInfoBlock.Add(string.Empty);
+                    phaseInfoBlock.Add(ContinueOptionText);
+                    break;
+                default:
+                    phaseInfoBlock.Add(string.Empty);
+                    phaseInfoBlock.Add(ContinueOptionText);
+                    break;
+            }
         }
 
-        // ==========================
-        gameInfo.Add(HorizontalRule); 
-        // ==========================
+        return string.Join("\n", phaseInfoBlock);
+    }
 
-        // Game Phase info block
-        gameInfo.Add($"{GamePhaseDescriptions[gameState.GamePhase]} -- {gameState.GamePhaseStage}");
-
-        // Previous step info block
-        List<string> previousGamePhaseInfo = [];
+    private static string PreviousGamePhaseInfoBlock(GameState gameState)
+    {
+        List<string> previousPhaseInfo = [];
         switch (gameState.GamePhase)
         {
             case GamePhase.Betting:
-                if (gameState.LastPlayerIntent == PlayerActions.Bet && gameState.LastHand != null)
+                if (gameState.LastPlayerIntent == PlayerActions.Bet && gameState.LastHand is not null)
                 {
                     List<string> handInfo = [];
                     Bet? betForHand = gameState.ActiveBets.Find(bet => bet.Hand == gameState.LastHand);
-                    if (betForHand != null)
+                    if (betForHand is not null)
                     {
-                        previousGamePhaseInfo.Add($"{betForHand.Player.Name} bets ${betForHand.Amount}");
+                        previousPhaseInfo.Add($"{betForHand.Player.Name} bets ${betForHand.Amount}");
                     }
                 }
                 break;
             case GamePhase.Dealing:
-                if (gameState.LastDrawnCard != null)
+                if (gameState.LastDrawnCard is not null)
                 {
                     if(gameState.DealerHand.Cards.Count > 0 && gameState.LastDrawnCard == gameState.DealerHand.Cards.Last())
                     {
-                        previousGamePhaseInfo.Add($"{CardText(gameState.LastDrawnCard)} dealt to dealer");
+                        previousPhaseInfo.Add($"{CardText(gameState.LastDrawnCard)} dealt to dealer");
                     }
-                    else if(gameState.LastPlayer != null)
+                    else if(gameState.LastPlayer is not null)
                     {
-                        previousGamePhaseInfo.Add($"{CardText(gameState.LastDrawnCard)} dealt to {gameState.LastPlayer.Name}");
+                        previousPhaseInfo.Add($"{CardText(gameState.LastDrawnCard)} dealt to {gameState.LastPlayer.Name}");
                     }
                 }
                 break;
             case GamePhase.PlayerTurns:
-                if (gameState.LastPlayerIntent != null && gameState.LastHand != null)
+                if (gameState.LastPlayerIntent is not null && gameState.LastHand is not null)
                 {
                     List<string> playerTurnInfo = [];
                     Bet? betForHand = gameState.ActiveBets.Find(bet => bet.Hand == gameState.LastHand);
-                    if (betForHand != null)
+                    if (betForHand is not null)
                     {
                         playerTurnInfo.Add($"{betForHand.Player.Name}");
                         playerTurnInfo.Add($"{PlayerActionTakenText[(PlayerActions)gameState.LastPlayerIntent]}");
                         playerTurnInfo.Add($"${betForHand.Amount}");
-                        previousGamePhaseInfo.Add(string.Join(" ", playerTurnInfo));
+                        previousPhaseInfo.Add(string.Join(" ", playerTurnInfo));
                     }
                 }
                 break;
             case GamePhase.DealerTurn:
-                if (gameState.LastDealerAction != null)
+                if (gameState.LastDealerAction is not null)
                 {
-                    previousGamePhaseInfo.Add(DealerActionTakenText[(DealerActions)gameState.LastDealerAction]);
+                    previousPhaseInfo.Add(DealerActionTakenText[(DealerActions)gameState.LastDealerAction]);
                 }
                 break;
             case GamePhase.RoundEnd:
-                if (gameState.LastResolvedBet != null)
+                if (gameState.LastResolvedBet is not null)
                 {
-                    previousGamePhaseInfo.Add($"{gameState.LastResolvedBet.Player.Name} {gameState.LastResolvedBet.Resolution}");
+                    previousPhaseInfo.Add($"{gameState.LastResolvedBet.Player.Name} {gameState.LastResolvedBet.Resolution}");
                 }
                 break;
+            default:
+                previousPhaseInfo.Add("");
+                break;
         }
-        if(previousGamePhaseInfo.Count > 0)
-        {
-            // ------------------------------
-            gameInfo.Add(HorizontalRuleThin);
-            // ------------------------------
-
-            gameInfo.Add(string.Join("\n" + HorizontalRuleThin + "\n", previousGamePhaseInfo));
-        }
-
-        // Current step info block
-        if(gameState.GamePhaseStage == GamePhaseStage.InProgress)
-        {
-            List<string> currentPhaseInfo = [];
-            switch (gameState.GamePhase)
-            {
-                case GamePhase.Betting:
-                    currentPhaseInfo.Add(PlayerActionSummary(gameState));
-                    break;
-                case GamePhase.Dealing:
-                    break;
-                case GamePhase.PlayerTurns:
-                    currentPhaseInfo.Add(PlayerActionSummary(gameState));
-                    break;
-                case GamePhase.DealerTurn:
-                    break;
-                case GamePhase.RoundEnd:
-                    break;
-            }
-            if(currentPhaseInfo.Count > 0)
-            {
-                // ------------------------------
-                gameInfo.Add(HorizontalRuleThin);
-                // ------------------------------
-
-                gameInfo.Add(string.Join("\n" + HorizontalRuleThin + "\n", currentPhaseInfo));
-            }
-        }
-
-        // ==========================
-        gameInfo.Add(HorizontalRule); 
-        // ==========================
-
-        if(gameState.LastDealerAction != null){
-            gameInfo.Add($"LastDealerAction: {gameState.LastDealerAction}");
-        }
-        if(gameState.LastPlayer != null){
-            gameInfo.Add($"LastPlayer: {gameState.LastPlayer}");
-        }
-        if(gameState.LastPlayerIntent != null){
-            gameInfo.Add($"LastPlayerIntent: {gameState.LastPlayerIntent}");
-        }
-        if(gameState.LastHand != null){
-            gameInfo.Add($"LastHand: {gameState.LastHand}");
-        }
-        if(gameState.LastDrawnCard != null){
-            gameInfo.Add($"LastDrawnCard: {gameState.LastDrawnCard}");
-        }
-        if(gameState.LastResolvedBet != null){
-            gameInfo.Add($"LastResolvedBet: {gameState.LastResolvedBet}");
-        }
-
-        return string.Join("\n", gameInfo);
+        return string.Join("\n", previousPhaseInfo);
     }
+
+
+    private static string DebugGameStateBlock(GameState gameState)
+    {
+        List<string> gameStateProperties = [];
+        gameStateProperties.Add($"GamePhase: {gameState.GamePhase}; GamePhaseStage: {gameState.GamePhaseStage}");
+
+        gameStateProperties.Add("== Current things ==");
+        gameStateProperties.Add($"HandIndex: {gameState.CurrentHandIndex}; PlayerIndex: {gameState.CurrentPlayerIndex}");
+        gameStateProperties.Add($"PlayerIntent: {gameState.CurrentPlayerIntent}");
+        gameStateProperties.Add($"PlayerOptions: [{string.Join(", ", PlayerOptionsTexts(gameState))}]");
+        gameStateProperties.Add($"DealerAction: {gameState.DealerAction}; DealerHand: {CardsTextInline(gameState.DealerHand, true)}");
+        gameStateProperties.Add("====================");
+
+        if(gameState.ActiveBets.Count > 0)
+        {
+            gameStateProperties.Add("== ActiveBets ======");
+            foreach(Bet bet in gameState.ActiveBets)
+            {
+                gameStateProperties.Add($"{bet.Player.Name}; ${bet.Amount}; {bet.Type}; {bet.Resolution}, {CardsTextInline(bet.Hand, true)}");
+            }
+            gameStateProperties.Add("====================");
+        }
+
+        gameStateProperties.Add("== Last things =====");
+        if(gameState.LastDealerAction is not null){
+            gameStateProperties.Add($"LastDealerAction: {gameState.LastDealerAction}");
+        }
+        if(gameState.LastPlayer is not null){
+            gameStateProperties.Add($"LastPlayer: {gameState.LastPlayer}; Name: {gameState.LastPlayer.Name}");
+        }
+        if(gameState.LastPlayerIntent is not null){
+            gameStateProperties.Add($"LastPlayerIntent: {gameState.LastPlayerIntent}");
+        }
+        if(gameState.LastHand is not null){
+            gameStateProperties.Add($"LastHand: {CardsTextInline(gameState.LastHand, true)}");
+        }
+        if(gameState.LastDrawnCard is not null){
+            gameStateProperties.Add($"LastDrawnCard: {gameState.LastDrawnCard}; Card: {CardText(gameState.LastDrawnCard, true)}");
+        }
+        if(gameState.LastResolvedBet is not null){
+            gameStateProperties.Add($"LastResolvedBet: {gameState.LastResolvedBet}; Player: ${gameState.LastResolvedBet.Player.Name};  Amount: ${gameState.LastResolvedBet.Amount}");
+        }
+        gameStateProperties.Add("====================");
+
+        return string.Join("\n", gameStateProperties);
+    }
+
 }
