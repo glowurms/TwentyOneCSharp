@@ -25,7 +25,7 @@ namespace TwentyOne
             {
                 ConsoleKeyInfo playerInput = Console.ReadKey(true);
                 // Game Specific keypress captured
-                if (Keybinds.GameAction.TryGetValue(playerInput.Key, out GameActions gameAction))
+                if (Keybinds.KeyToGameAction.TryGetValue(playerInput.Key, out GameActions gameAction))
                 {
                     if(gameAction == GameActions.Cancel || gameAction == GameActions.Quit)
                     {
@@ -37,7 +37,7 @@ namespace TwentyOne
                     }
                 }
                 // Player specific keypress captured
-                else if (Keybinds.PlayerAction.TryGetValue(playerInput.Key, out PlayerActions playerHandAction))
+                else if (Keybinds.KeyToPlayerAction.TryGetValue(playerInput.Key, out PlayerActions playerHandAction))
                 {
                     gameService.SelectPlayerAction(playerHandAction);
                 }
