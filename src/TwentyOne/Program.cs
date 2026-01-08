@@ -6,10 +6,22 @@ namespace TwentyOne
 {
     internal class Program
     {
+        public static bool DisplaySizeIsTooSmall()
+        {
+            return Console.WindowWidth < GameConstants.PreferredTerminalWidth || Console.WindowHeight < GameConstants.PreferredTerminalHeight;
+        }
+
         static void Main(string[] args)
         {
             bool running = true;
-            Console.OutputEncoding = System.Text.Encoding.UTF8; // Allows display of suits ♣ ♦ ♥ ♠
+            
+            // Allows display of suits ♣ ♦ ♥ ♠
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            int windowMaxWidth = Console.LargestWindowWidth;
+            int windowMaxHeight = Console.LargestWindowHeight;
+
+            string displaySizeWarning = $"Use minimum dimensions of {GameConstants.PreferredTerminalWidth} columns by {GameConstants.PreferredTerminalHeight} rows to prevent wrapping and scrolling.";
 
             GameService gameService = new();
             gameService.StateChanged = () =>
@@ -17,6 +29,10 @@ namespace TwentyOne
                 // Redraw
                 Console.Clear();
                 Console.WriteLine(TextService.GameStateSummary(gameService.GameState));
+                if (DisplaySizeIsTooSmall())
+                {
+                    Console.WriteLine(displaySizeWarning);
+                }
             };
 
             gameService.StartNewGame(3, 500, 6);
